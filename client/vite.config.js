@@ -8,5 +8,8 @@ export default defineConfig({
     proxy: {
       "/api": "http://localhost:5050"
     }
+  },
+  preview: {
+    allowedHosts: ["ldiclient-production.up.railway.app"]
   }
 });
