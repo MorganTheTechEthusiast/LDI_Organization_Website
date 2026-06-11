@@ -40,6 +40,26 @@ Frontend: `http://localhost:5173`
 
 Backend API: `http://localhost:5050/api`
 
+Production frontend: `https://liberiadigitalinsights.up.railway.app`
+
+Production backend API: `https://ldi-backend.up.railway.app/api`
+
+Production backend health check: `https://ldi-backend.up.railway.app/api/health`
+
+Railway frontend variable:
+
+```text
+VITE_API_URL=https://ldi-backend.up.railway.app/api
+```
+
+Railway backend variables:
+
+```text
+CLIENT_ORIGIN=https://liberiadigitalinsights.up.railway.app
+DB_CLIENT=postgres
+DATABASE_URL=your_railway_postgres_url
+```
+
 ## Admin Login
 
 ```text

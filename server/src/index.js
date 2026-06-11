@@ -11,8 +11,24 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5050;
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "https://liberiadigitalinsights.up.railway.app",
+  ...(process.env.CLIENT_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+]);
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173", credentials: true }));
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
+    credentials: true
+  })
+);
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 
