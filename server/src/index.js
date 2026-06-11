@@ -25,11 +25,22 @@ const allowedOrigins = new Set([
     .filter(Boolean)
 ]);
 
+function isAllowedRailwayOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    return url.protocol === "https:" && url.hostname.endsWith(".up.railway.app");
+  } catch {
+    return false;
+  }
+}
+
 const corsOptions = {
   origin(origin, callback) {
     const normalizedOrigin = normalizeOrigin(origin);
-    if (!normalizedOrigin || allowedOrigins.has(normalizedOrigin)) return callback(null, true);
-    return callback(new Error(`CORS blocked origin: ${origin}`));
+    if (!normalizedOrigin || allowedOrigins.has(normalizedOrigin) || isAllowedRailwayOrigin(normalizedOrigin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
