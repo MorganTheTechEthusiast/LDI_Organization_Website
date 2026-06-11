@@ -6,10 +6,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": "http://localhost:5050"
-    }
+      "/api": "http://localhost:5050",
+    },
   },
   preview: {
-    allowedHosts: ["ldiclient-production.up.railway.app"]
-  }
+    allowedHosts: ["liberiadigitalinsights.up.railway.app"],
+  },
 });

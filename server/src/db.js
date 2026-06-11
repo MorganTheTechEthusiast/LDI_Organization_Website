@@ -12,6 +12,11 @@ const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, "..", "data");
 const dbPath = path.join(dataDir, "ldi.sqlite");
 const dbClient = (process.env.DB_CLIENT || "sqlite").toLowerCase();
+const postgresUrl =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRES_DATABASE_URL ||
+  process.env.DATABASE_PUBLIC_URL;
 
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
@@ -22,15 +27,25 @@ sqlite3.verbose();
 const sqliteDb = dbClient === "sqlite" ? new sqlite3.Database(process.env.SQLITE_PATH || dbPath) : null;
 const pgPool =
   dbClient === "postgres"
-    ? new pg.Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined
-      })
+    ? createPostgresPool()
     : null;
 
 export const db = {
   close: () => closeDb()
 };
+
+function createPostgresPool() {
+  if (!postgresUrl) {
+    throw new Error(
+      "DB_CLIENT=postgres requires DATABASE_URL. In Railway, add DATABASE_URL as a reference to your PostgreSQL service connection string."
+    );
+  }
+
+  return new pg.Pool({
+    connectionString: postgresUrl,
+    ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined
+  });
+}
 
 function toPostgresSql(sql) {
   let index = 0;
