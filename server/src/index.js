@@ -11,24 +11,33 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5050;
+
+function normalizeOrigin(origin) {
+  return origin?.trim().replace(/\/$/, "");
+}
+
 const allowedOrigins = new Set([
   "http://localhost:5173",
   "https://liberiadigitalinsights.up.railway.app",
   ...(process.env.CLIENT_ORIGIN || "")
     .split(",")
-    .map((origin) => origin.trim())
+    .map(normalizeOrigin)
     .filter(Boolean)
 ]);
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked origin: ${origin}`));
-    },
-    credentials: true
-  })
-);
+const corsOptions = {
+  origin(origin, callback) {
+    const normalizedOrigin = normalizeOrigin(origin);
+    if (!normalizedOrigin || allowedOrigins.has(normalizedOrigin)) return callback(null, true);
+    return callback(new Error(`CORS blocked origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 
