@@ -68,8 +68,14 @@ app.use((err, _req, res, _next) => {
   return res.status(500).json({ message: "Something went wrong on the server." });
 });
 
-initDb().then(() => {
-  app.listen(port, () => {
-    console.log(`LDI API running on http://localhost:${port}/api`);
+initDb()
+  .then(() => {
+    app.listen(port, "0.0.0.0", () => {
+      console.log(`LDI API running on port ${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to initialize database. Server did not start.");
+    console.error(error);
+    process.exit(1);
   });
-});
