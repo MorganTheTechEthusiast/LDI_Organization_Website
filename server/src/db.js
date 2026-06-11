@@ -1,23 +1,57 @@
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
+import pg from "pg";
 import sqlite3 from "sqlite3";
 import { fileURLToPath } from "url";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, "..", "data");
 const dbPath = path.join(dataDir, "ldi.sqlite");
+const dbClient = (process.env.DB_CLIENT || "sqlite").toLowerCase();
 
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
 sqlite3.verbose();
-export const db = new sqlite3.Database(dbPath);
+
+const sqliteDb = dbClient === "sqlite" ? new sqlite3.Database(process.env.SQLITE_PATH || dbPath) : null;
+const pgPool =
+  dbClient === "postgres"
+    ? new pg.Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined
+      })
+    : null;
+
+export const db = {
+  close: () => closeDb()
+};
+
+function toPostgresSql(sql) {
+  let index = 0;
+  return sql.replace(/\?/g, () => `$${++index}`);
+}
 
 export function run(sql, params = []) {
+  if (dbClient === "postgres") {
+    let query = toPostgresSql(sql);
+    if (/^\s*insert\s+/i.test(query) && !/\sreturning\s+/i.test(query)) {
+      query = `${query} RETURNING id`;
+    }
+
+    return pgPool.query(query, params).then((result) => ({
+      id: result.rows[0]?.id,
+      changes: result.rowCount
+    }));
+  }
+
   return new Promise((resolve, reject) => {
-    db.run(sql, params, function onRun(err) {
+    sqliteDb.run(sql, params, function onRun(err) {
       if (err) reject(err);
       else resolve({ id: this.lastID, changes: this.changes });
     });
@@ -25,8 +59,12 @@ export function run(sql, params = []) {
 }
 
 export function all(sql, params = []) {
+  if (dbClient === "postgres") {
+    return pgPool.query(toPostgresSql(sql), params).then((result) => result.rows);
+  }
+
   return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
+    sqliteDb.all(sql, params, (err, rows) => {
       if (err) reject(err);
       else resolve(rows);
     });
@@ -34,18 +72,38 @@ export function all(sql, params = []) {
 }
 
 export function get(sql, params = []) {
+  if (dbClient === "postgres") {
+    return pgPool.query(toPostgresSql(sql), params).then((result) => result.rows[0]);
+  }
+
   return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
+    sqliteDb.get(sql, params, (err, row) => {
       if (err) reject(err);
       else resolve(row);
     });
   });
 }
 
+export async function closeDb() {
+  if (dbClient === "postgres") {
+    await pgPool.end();
+    return;
+  }
+
+  await new Promise((resolve, reject) => {
+    sqliteDb.close((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
 export async function initDb() {
+  const idColumn = dbClient === "postgres" ? "SERIAL PRIMARY KEY" : "INTEGER PRIMARY KEY AUTOINCREMENT";
+
   await run(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idColumn},
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
@@ -56,7 +114,7 @@ export async function initDb() {
 
   await run(`
     CREATE TABLE IF NOT EXISTS blog_posts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idColumn},
       title TEXT NOT NULL,
       slug TEXT NOT NULL UNIQUE,
       category TEXT NOT NULL,
@@ -71,7 +129,7 @@ export async function initDb() {
 
   await run(`
     CREATE TABLE IF NOT EXISTS events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idColumn},
       title TEXT NOT NULL,
       date TEXT NOT NULL,
       image_url TEXT NOT NULL,
@@ -83,7 +141,7 @@ export async function initDb() {
 
   await run(`
     CREATE TABLE IF NOT EXISTS team_members (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idColumn},
       name TEXT NOT NULL,
       position TEXT NOT NULL,
       bio TEXT NOT NULL,
@@ -96,7 +154,7 @@ export async function initDb() {
 
   await run(`
     CREATE TABLE IF NOT EXISTS gallery (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idColumn},
       title TEXT NOT NULL,
       category TEXT NOT NULL,
       image_url TEXT NOT NULL,
@@ -107,7 +165,7 @@ export async function initDb() {
 
   await run(`
     CREATE TABLE IF NOT EXISTS partners (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idColumn},
       name TEXT NOT NULL,
       logo_url TEXT NOT NULL,
       description TEXT NOT NULL,
@@ -118,7 +176,7 @@ export async function initDb() {
 
   await run(`
     CREATE TABLE IF NOT EXISTS contact_messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idColumn},
       name TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT,

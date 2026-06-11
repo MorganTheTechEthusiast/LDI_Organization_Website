@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { db, initDb, run } from "./db.js";
+import { closeDb, initDb, run } from "./db.js";
 
 const images = {
   hero: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80",
@@ -150,11 +150,10 @@ async function main() {
   await seedGallery();
   await seedPartners();
   console.log("LDI database seeded successfully.");
-  db.close();
+  await closeDb();
 }
 
 main().catch((error) => {
   console.error(error);
-  db.close();
-  process.exit(1);
+  closeDb().finally(() => process.exit(1));
 });
