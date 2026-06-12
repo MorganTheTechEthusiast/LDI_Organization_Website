@@ -13,6 +13,7 @@ api.interceptors.request.use((config) => {
 export const endpoints = {
   posts: "/blog-posts",
   events: "/events",
+  videos: "/videos",
   team: "/team-members",
   gallery: "/gallery",
   partners: "/partners",

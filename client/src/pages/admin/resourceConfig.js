@@ -28,6 +28,24 @@ export const resourceConfig = {
       ["description", "Short Description", "textarea"]
     ]
   },
+  videos: {
+    title: "Video Interviews",
+    endpoint: "/videos",
+    columns: ["title", "category", "guest_name", "date"],
+    required: ["title", "category", "guest_name", "date", "video_url", "summary"],
+    fields: [
+      ["title", "Title"],
+      ["slug", "Slug"],
+      ["category", "Category"],
+      ["guest_name", "Guest Name"],
+      ["guest_title", "Guest Title"],
+      ["date", "Date", "date"],
+      ["thumbnail_url", "Thumbnail Image URL", "url"],
+      ["video_url", "Video URL", "url"],
+      ["summary", "Short Summary", "textarea"],
+      ["description", "Full Description", "textarea"]
+    ]
+  },
   team: {
     title: "Team Members",
     endpoint: "/team-members",

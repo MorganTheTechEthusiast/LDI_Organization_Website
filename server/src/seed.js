@@ -21,6 +21,7 @@ async function reset() {
   await run("DELETE FROM partners");
   await run("DELETE FROM gallery");
   await run("DELETE FROM team_members");
+  await run("DELETE FROM video_interviews");
   await run("DELETE FROM events");
   await run("DELETE FROM blog_posts");
   await run("DELETE FROM users");
@@ -97,6 +98,45 @@ async function seedEvents() {
   }
 }
 
+async function seedVideos() {
+  const videos = [
+    {
+      title: "Inside Liberia's Digital Media Future",
+      slug: "inside-liberias-digital-media-future",
+      category: "Video Interview",
+      guest_name: "Emmanuel S. Johnson",
+      guest_title: "Founder, Liberia Digital Insights",
+      date: "2026-05-30",
+      thumbnail_url: images.podcast,
+      video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      summary: "A conversation on technology storytelling, digital inclusion, and how media can accelerate Liberia's innovation ecosystem.",
+      description:
+        "In this LDI video interview, we discuss the role of media in helping young Liberians understand technology, discover opportunities, and build confidence in the digital era."
+    },
+    {
+      title: "Youth Skills, Startups, and Liberia's Tech Opportunity",
+      slug: "youth-skills-startups-and-liberias-tech-opportunity",
+      category: "Startup Conversation",
+      guest_name: "Grace N. Cooper",
+      guest_title: "Podcast Host and Digital Storyteller",
+      date: "2026-05-21",
+      thumbnail_url: images.training,
+      video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      summary: "A practical discussion about digital skills, youth empowerment, and startup visibility in Liberia.",
+      description:
+        "This interview explores how training, storytelling, and community awareness can help young people and founders participate more actively in Liberia's digital economy."
+    }
+  ];
+
+  for (const video of videos) {
+    await run(
+      `INSERT INTO video_interviews (title, slug, category, guest_name, guest_title, date, thumbnail_url, video_url, summary, description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [video.title, video.slug, video.category, video.guest_name, video.guest_title, video.date, video.thumbnail_url, video.video_url, video.summary, video.description]
+    );
+  }
+}
+
 async function seedTeam() {
   const members = [
     ["Emmanuel S. Johnson", "CEO & Founder", "Leads LDI's mission to make technology information accessible, useful, and inspiring across Liberia.", images.team1, "https://linkedin.com", "https://x.com"],
@@ -146,6 +186,7 @@ async function main() {
   await seedUsers();
   await seedBlogPosts();
   await seedEvents();
+  await seedVideos();
   await seedTeam();
   await seedGallery();
   await seedPartners();

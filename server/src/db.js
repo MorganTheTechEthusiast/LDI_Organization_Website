@@ -155,6 +155,23 @@ export async function initDb() {
   `);
 
   await run(`
+    CREATE TABLE IF NOT EXISTS video_interviews (
+      id ${idColumn},
+      title TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      category TEXT NOT NULL,
+      guest_name TEXT NOT NULL,
+      guest_title TEXT,
+      date TEXT NOT NULL,
+      thumbnail_url TEXT NOT NULL,
+      video_url TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      description TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
     CREATE TABLE IF NOT EXISTS team_members (
       id ${idColumn},
       name TEXT NOT NULL,

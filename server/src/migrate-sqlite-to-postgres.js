@@ -23,6 +23,7 @@ const tables = [
   "users",
   "blog_posts",
   "events",
+  "video_interviews",
   "team_members",
   "gallery",
   "partners",
@@ -57,6 +58,20 @@ const schemas = [
     image_url TEXT NOT NULL,
     description TEXT NOT NULL,
     status TEXT NOT NULL CHECK(status IN ('Upcoming', 'Ongoing', 'Completed')),
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS video_interviews (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    category TEXT NOT NULL,
+    guest_name TEXT NOT NULL,
+    guest_title TEXT,
+    date TEXT NOT NULL,
+    thumbnail_url TEXT NOT NULL,
+    video_url TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    description TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS team_members (

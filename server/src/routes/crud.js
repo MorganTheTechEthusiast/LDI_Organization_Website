@@ -19,6 +19,14 @@ const tableConfig = {
     defaults: { image_url: "https://dummyimage.com/1200x800/F97316/111111&text=LDI+Event" },
     order: "date DESC, id DESC"
   },
+  videos: {
+    table: "video_interviews",
+    fields: ["title", "slug", "category", "guest_name", "guest_title", "date", "thumbnail_url", "video_url", "summary", "description"],
+    required: ["title", "category", "guest_name", "date", "video_url", "summary"],
+    defaults: { thumbnail_url: "https://dummyimage.com/1200x675/7A1022/ffffff&text=LDI+Video+Interview" },
+    order: "date DESC, id DESC",
+    bySlug: true
+  },
   "team-members": {
     table: "team_members",
     fields: ["name", "position", "bio", "photo_url", "linkedin", "twitter"],
