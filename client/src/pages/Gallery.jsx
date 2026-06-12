@@ -11,7 +11,7 @@ export default function Gallery() {
       <div className="container-tight grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {data.map((item) => (
           <figure key={item.id} className="card overflow-hidden">
-            <CardImage src={item.image_url} alt={item.title} className="h-72" />
+            <CardImage src={item.image_url} alt={item.title} ratio="aspect-[4/3]" />
             <figcaption className="p-5">
               <p className="text-xs font-black uppercase text-maroon">{item.category}</p>
               <h3 className="mt-1 text-lg font-black">{item.title}</h3>
