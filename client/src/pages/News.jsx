@@ -15,7 +15,7 @@ export default function News() {
       <div className="container-tight">
         {leadPost && (
           <article className="mb-10 grid gap-7 border-b border-black/10 pb-10 lg:grid-cols-[0.85fr_1fr]">
-            <CardImage src={leadPost.image_url} alt={leadPost.title} className="rounded-sm" ratio="aspect-[16/11]" />
+            <CardImage src={leadPost.image_url} alt={leadPost.title} className="h-[420px] rounded-sm" />
             <div className="self-center">
               <p className="font-heading text-sm font-black uppercase text-maroon">#{leadPost.category}</p>
               <h2 className="mt-3 font-heading text-4xl font-black leading-tight text-ink sm:text-6xl">{leadPost.title}</h2>

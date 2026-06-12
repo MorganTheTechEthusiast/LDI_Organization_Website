@@ -4,7 +4,7 @@ import CardImage from "./CardImage.jsx";
 export default function TeamCard({ member }) {
   return (
     <article className="card overflow-hidden">
-      <CardImage src={member.photo_url} alt={member.name} ratio="aspect-[4/5]" />
+      <CardImage src={member.photo_url} alt={member.name} className="h-72" />
       <div className="p-6">
         <h3 className="text-xl font-black text-ink">{member.name}</h3>
         <p className="mt-1 text-sm font-bold text-maroon">{member.position}</p>

@@ -40,7 +40,7 @@ export default function ProgramDetail() {
 
       <div className="container-tight grid gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
         <div>
-          {program.image_url && <CardImage src={program.image_url} alt={program.title} className="rounded-sm" ratio="aspect-[16/9]" />}
+          {program.image_url && <CardImage src={program.image_url} alt={program.title} className="h-[460px] rounded-sm" />}
           <div className="mt-10 border-l-4 border-maroon pl-6">
             <h2 className="font-heading text-3xl font-black text-ink">Program Overview</h2>
             <p className="mt-4 text-lg leading-9 text-black/70">{program.description}</p>

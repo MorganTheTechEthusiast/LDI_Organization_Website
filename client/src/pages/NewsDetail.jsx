@@ -20,7 +20,7 @@ export default function NewsDetail() {
         </div>
       </header>
       <div className="container-tight max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        {post.image_url && <CardImage src={post.image_url} alt={post.title} className="mb-8 rounded-sm" ratio="aspect-[16/9]" />}
+        {post.image_url && <CardImage src={post.image_url} alt={post.title} className="mb-8 h-[420px] rounded-lg" />}
         <p className="text-xl font-semibold leading-8 text-black/75">{post.summary}</p>
         <div className="mt-8 whitespace-pre-line text-lg leading-9 text-black/70">{post.content}</div>
       </div>
