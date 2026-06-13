@@ -1,0 +1,40 @@
+{
+  "name": "Liberia Digital Insights",
+  "short_name": "LDI",
+  "description": "Technology media, digital innovation, and youth empowerment platform for Liberia.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#111113",
+  "theme_color": "#7A1022",
+  "categories": ["news", "education", "technology"],
+  "icons": [
+    {
+      "src": "/ldi-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "News",
+      "short_name": "News",
+      "url": "/news",
+      "icons": [{ "src": "/ldi-logo.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Video Interviews",
+      "short_name": "Video",
+      "url": "/video",
+      "icons": [{ "src": "/ldi-logo.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Contact LDI",
+      "short_name": "Contact",
+      "url": "/contact",
+      "icons": [{ "src": "/ldi-logo.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}
