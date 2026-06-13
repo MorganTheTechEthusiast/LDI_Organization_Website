@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarDays, ExternalLink, UserRound } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch.js";
 import { getVideoEmbedUrl } from "../utils/video.js";
@@ -41,6 +41,16 @@ export default function VideoDetail() {
               allowFullScreen
             />
           </div>
+        )}
+        {video.video_url && (
+          <a
+            href={video.video_url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex items-center gap-2 font-heading text-sm font-black uppercase text-ember hover:text-white"
+          >
+            Open video on original platform <ExternalLink className="h-4 w-4" />
+          </a>
         )}
         <div className="mt-10 max-w-4xl border-l-4 border-ember pl-6">
           <h2 className="font-heading text-3xl font-black">Interview Overview</h2>
