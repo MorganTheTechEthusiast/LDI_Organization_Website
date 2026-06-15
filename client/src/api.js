@@ -14,6 +14,7 @@ export const endpoints = {
   posts: "/blog-posts",
   events: "/events",
   videos: "/videos",
+  trainings: "/trainings",
   team: "/team-members",
   gallery: "/gallery",
   partners: "/partners",

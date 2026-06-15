@@ -1,4 +1,4 @@
-import { CalendarDays, Image, Mail, Newspaper, Users, Video } from "lucide-react";
+import { CalendarDays, GraduationCap, Image, Mail, Newspaper, Users, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
 
@@ -6,6 +6,7 @@ const cards = [
   ["Posts", "/blog-posts", Newspaper],
   ["Events", "/events", CalendarDays],
   ["Videos", "/videos", Video],
+  ["Training", "/trainings", GraduationCap],
   ["Team", "/team-members", Users],
   ["Gallery", "/gallery", Image],
   ["Messages", "/contact-messages", Mail]

@@ -27,6 +27,14 @@ const tableConfig = {
     order: "date DESC, id DESC",
     bySlug: true
   },
+  trainings: {
+    table: "trainings",
+    fields: ["title", "slug", "course", "location", "start_date", "duration", "image_url", "description", "registration_url", "status", "featured"],
+    required: ["title", "course", "location", "start_date", "duration", "description", "status"],
+    defaults: { image_url: "https://dummyimage.com/1200x800/7A1022/ffffff&text=LDI+Training", featured: 0 },
+    order: "featured DESC, start_date ASC, id DESC",
+    bySlug: true
+  },
   "team-members": {
     table: "team_members",
     fields: ["name", "position", "bio", "photo_url", "linkedin", "twitter"],
@@ -55,6 +63,12 @@ export const crudRouter = express.Router();
 function applyDefaults(body, defaults = {}) {
   for (const [field, value] of Object.entries(defaults)) {
     if (!body[field] || String(body[field]).trim() === "") body[field] = value;
+  }
+}
+
+function normalizeRecord(path, body) {
+  if (path === "trainings") {
+    body.featured = body.featured === true || body.featured === "true" || body.featured === 1 || body.featured === "1" ? 1 : 0;
   }
 }
 
@@ -97,6 +111,7 @@ for (const [path, config] of Object.entries(tableConfig)) {
   crudRouter.post(`/${path}`, requireAuth, async (req, res, next) => {
     try {
       applyDefaults(req.body, config.defaults);
+      normalizeRecord(path, req.body);
       if (config.bySlug) req.body.slug = await uniqueSlug(config.table, req.body.slug || req.body.title);
       const missing = requiredFields(req.body, config.required);
       if (missing.length) return res.status(400).json({ message: `Missing fields: ${missing.join(", ")}` });
@@ -117,6 +132,7 @@ for (const [path, config] of Object.entries(tableConfig)) {
   crudRouter.put(`/${path}/:id`, requireAuth, async (req, res, next) => {
     try {
       applyDefaults(req.body, config.defaults);
+      normalizeRecord(path, req.body);
       if (config.bySlug) req.body.slug = await uniqueSlug(config.table, req.body.slug || req.body.title, req.params.id);
       const missing = requiredFields(req.body, config.required);
       if (missing.length) return res.status(400).json({ message: `Missing fields: ${missing.join(", ")}` });

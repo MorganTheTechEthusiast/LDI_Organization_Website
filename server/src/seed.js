@@ -21,6 +21,7 @@ async function reset() {
   await run("DELETE FROM partners");
   await run("DELETE FROM gallery");
   await run("DELETE FROM team_members");
+  await run("DELETE FROM trainings");
   await run("DELETE FROM video_interviews");
   await run("DELETE FROM events");
   await run("DELETE FROM blog_posts");
@@ -137,6 +138,59 @@ async function seedVideos() {
   }
 }
 
+async function seedTrainings() {
+  const trainings = [
+    {
+      title: "Girls in Tech Digital Skills Training",
+      slug: "girls-in-tech-digital-skills-training",
+      course: "Digital Literacy, Online Safety, Canva, Content Creation, and Intro to Web Tools",
+      location: "Monrovia, Liberia",
+      start_date: "2026-07-12",
+      duration: "4 weeks",
+      image_url: images.training,
+      description:
+        "A practical training program designed to help girls and young women build confidence with digital tools, online safety, creative content, and technology career pathways.",
+      registration_url: "https://forms.gle/example",
+      status: "Upcoming",
+      featured: 1
+    },
+    {
+      title: "High School Technology Awareness Bootcamp",
+      slug: "high-school-technology-awareness-bootcamp",
+      course: "Technology Careers, Responsible Internet Use, Productivity Tools, and Innovation Mindset",
+      location: "Partner high schools across Montserrado",
+      start_date: "2026-08-03",
+      duration: "2 days per school",
+      image_url: images.outreach,
+      description:
+        "A school-based awareness bootcamp introducing students to digital careers, technology opportunities, safe internet habits, and problem-solving with modern tools.",
+      registration_url: "https://forms.gle/example",
+      status: "Upcoming",
+      featured: 0
+    }
+  ];
+
+  for (const training of trainings) {
+    await run(
+      `INSERT INTO trainings (title, slug, course, location, start_date, duration, image_url, description, registration_url, status, featured)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        training.title,
+        training.slug,
+        training.course,
+        training.location,
+        training.start_date,
+        training.duration,
+        training.image_url,
+        training.description,
+        training.registration_url,
+        training.status,
+        training.featured
+      ]
+    );
+  }
+}
+
 async function seedTeam() {
   const members = [
     ["Emmanuel S. Johnson", "CEO & Founder", "Leads LDI's mission to make technology information accessible, useful, and inspiring across Liberia.", images.team1, "https://linkedin.com", "https://x.com"],
@@ -187,6 +241,7 @@ async function main() {
   await seedBlogPosts();
   await seedEvents();
   await seedVideos();
+  await seedTrainings();
   await seedTeam();
   await seedGallery();
   await seedPartners();

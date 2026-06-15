@@ -85,6 +85,8 @@ Public endpoints:
 - `GET /api/events`
 - `GET /api/videos`
 - `GET /api/videos/:slug`
+- `GET /api/trainings`
+- `GET /api/trainings/:slug`
 - `GET /api/team-members`
 - `GET /api/gallery`
 - `GET /api/partners`
@@ -102,6 +104,9 @@ Admin endpoints require a bearer token:
 - `POST /api/videos`
 - `PUT /api/videos/:id`
 - `DELETE /api/videos/:id`
+- `POST /api/trainings`
+- `PUT /api/trainings/:id`
+- `DELETE /api/trainings/:id`
 - `POST /api/team-members`
 - `PUT /api/team-members/:id`
 - `DELETE /api/team-members/:id`

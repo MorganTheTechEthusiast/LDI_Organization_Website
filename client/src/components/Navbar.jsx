@@ -8,6 +8,7 @@ const links = [
   ["About", "/about"],
   ["Services", "/services"],
   ["Programs", "/programs"],
+  ["Training", "/training"],
   ["Video", "/video"],
   ["News", "/news"],
   ["Team", "/team"],

@@ -46,6 +46,25 @@ export const resourceConfig = {
       ["description", "Full Description", "textarea"]
     ]
   },
+  trainings: {
+    title: "Training Programs",
+    endpoint: "/trainings",
+    columns: ["title", "course", "start_date", "status"],
+    required: ["title", "course", "location", "start_date", "duration", "description", "status"],
+    fields: [
+      ["title", "Training Title"],
+      ["slug", "Slug"],
+      ["course", "Course / Topics"],
+      ["location", "Location"],
+      ["start_date", "Start Date", "date"],
+      ["duration", "Duration"],
+      ["image_url", "Training Image URL", "url"],
+      ["description", "Description", "textarea"],
+      ["registration_url", "Registration URL", "url"],
+      ["status", "Status", "select", ["Upcoming", "Ongoing", "Completed"]],
+      ["featured", "Featured Training", "select", ["1", "0"]]
+    ]
+  },
   team: {
     title: "Team Members",
     endpoint: "/team-members",

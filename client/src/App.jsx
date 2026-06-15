@@ -17,6 +17,8 @@ import Services from "./pages/Services.jsx";
 import Team from "./pages/Team.jsx";
 import VideoDetail from "./pages/VideoDetail.jsx";
 import Videos from "./pages/Videos.jsx";
+import Training from "./pages/Training.jsx";
+import TrainingDetail from "./pages/TrainingDetail.jsx";
 
 function RequireAuth({ children }) {
   return localStorage.getItem("ldi_token") ? children : <Navigate to="/admin/login" replace />;
@@ -33,6 +35,8 @@ export default function App() {
         <Route path="/programs/:id" element={<ProgramDetail />} />
         <Route path="/video" element={<Videos />} />
         <Route path="/video/:slug" element={<VideoDetail />} />
+        <Route path="/training" element={<Training />} />
+        <Route path="/training/:slug" element={<TrainingDetail />} />
         <Route path="/news" element={<News />} />
         <Route path="/news/:slug" element={<NewsDetail />} />
         <Route path="/team" element={<Team />} />
@@ -53,6 +57,7 @@ export default function App() {
         <Route path="posts" element={<AdminResource type="posts" />} />
         <Route path="events" element={<AdminResource type="events" />} />
         <Route path="videos" element={<AdminResource type="videos" />} />
+        <Route path="trainings" element={<AdminResource type="trainings" />} />
         <Route path="team" element={<AdminResource type="team" />} />
         <Route path="gallery" element={<AdminResource type="gallery" />} />
         <Route path="partners" element={<AdminResource type="partners" />} />

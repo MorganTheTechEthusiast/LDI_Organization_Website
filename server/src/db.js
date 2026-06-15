@@ -172,6 +172,24 @@ export async function initDb() {
   `);
 
   await run(`
+    CREATE TABLE IF NOT EXISTS trainings (
+      id ${idColumn},
+      title TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      course TEXT NOT NULL,
+      location TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      duration TEXT NOT NULL,
+      image_url TEXT NOT NULL,
+      description TEXT NOT NULL,
+      registration_url TEXT,
+      status TEXT NOT NULL DEFAULT 'Upcoming',
+      featured INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
     CREATE TABLE IF NOT EXISTS team_members (
       id ${idColumn},
       name TEXT NOT NULL,
