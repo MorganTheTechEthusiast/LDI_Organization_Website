@@ -11,7 +11,9 @@ export default defineConfig({
   },
   preview: {
     allowedHosts: [
-      "liberiadigitalinsights.up.railway.app, ldi.up.railway.app, liberiadigitalinsights.com ",
+      "liberiadigitalinsights.up.railway.app",
+      "ldi.up.railway.app",
+      "liberiadigitalinsights.com",
     ],
   },
 });
