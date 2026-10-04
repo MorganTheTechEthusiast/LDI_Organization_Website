@@ -232,6 +232,23 @@ export async function initDb() {
   `);
 
   await run(`
+    CREATE TABLE IF NOT EXISTS youth_innovators (
+      id ${idColumn},
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      role TEXT NOT NULL,
+      category TEXT NOT NULL,
+      location TEXT,
+      bio TEXT NOT NULL,
+      photo_url TEXT NOT NULL,
+      website TEXT,
+      linkedin TEXT,
+      featured INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
     CREATE TABLE IF NOT EXISTS partners (
       id ${idColumn},
       name TEXT NOT NULL,

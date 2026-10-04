@@ -8,7 +8,9 @@ const links = [
   ["About Us", "/about"],
   ["Programs & Impact", "/programs"],
   ["Digital Opportunities", "/opportunities"],
-  ["Youth Innovation", "/team"],
+  ["Youth Innovation", "/youth-innovation"],
+  ["Team", "/team"],
+  ["Gallery", "/gallery"],
   ["Insights / News", "/news"]
 ];
 
@@ -28,7 +30,7 @@ export default function Navbar() {
             </NavLink>
           ))}
           <ThemeToggle />
-          <NavLink to="/contact" className="btn-crimson px-5 py-2.5 text-sm">Get Involved <ArrowRight className="h-4 w-4" /></NavLink>
+          <NavLink to="/get-involved" className="btn-crimson px-5 py-2.5 text-sm">Get Involved <ArrowRight className="h-4 w-4" /></NavLink>
         </div>
         <div className="flex items-center gap-2 lg:hidden">
           <ThemeToggle />
@@ -45,7 +47,7 @@ export default function Navbar() {
                 {label}
               </NavLink>
             ))}
-            <NavLink to="/contact" className="btn-crimson mt-2 justify-center" onClick={() => setOpen(false)}>Get Involved <ArrowRight className="h-4 w-4" /></NavLink>
+            <NavLink to="/get-involved" className="btn-crimson mt-2 justify-center" onClick={() => setOpen(false)}>Get Involved <ArrowRight className="h-4 w-4" /></NavLink>
           </div>
         </div>
       )}

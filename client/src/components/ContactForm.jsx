@@ -1,11 +1,13 @@
 import { Send } from "lucide-react";
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 
 const empty = { name: "", email: "", phone: "", subject: "", message: "" };
 
 export default function ContactForm() {
-  const [form, setForm] = useState(empty);
+  const [searchParams] = useSearchParams();
+  const [form, setForm] = useState({ ...empty, subject: searchParams.get("subject") || "" });
   const [status, setStatus] = useState("");
 
   const update = (event) => setForm({ ...form, [event.target.name]: event.target.value });

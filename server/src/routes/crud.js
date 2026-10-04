@@ -57,6 +57,14 @@ const tableConfig = {
     defaults: { image_url: "https://dummyimage.com/1200x800/7A1022/ffffff&text=LDI+Gallery" },
     order: "id DESC"
   },
+  "youth-innovators": {
+    table: "youth_innovators",
+    fields: ["name", "slug", "role", "category", "location", "bio", "photo_url", "website", "linkedin", "featured"],
+    required: ["name", "role", "category", "bio"],
+    defaults: { photo_url: "https://dummyimage.com/800x1000/6B0F1A/ffffff&text=LDI+Youth+Innovation", featured: 0 },
+    order: "featured DESC, id DESC",
+    bySlug: true
+  },
   partners: {
     table: "partners",
     fields: ["name", "logo_url", "description", "website"],

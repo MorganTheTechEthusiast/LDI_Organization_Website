@@ -1,4 +1,4 @@
-import { BarChart3, Image, LayoutDashboard, LogOut, Newspaper, Users, CalendarDays, Handshake, Mail, Video, GraduationCap, BriefcaseBusiness } from "lucide-react";
+import { BarChart3, Image, LayoutDashboard, LogOut, Newspaper, Users, CalendarDays, Handshake, Mail, Video, GraduationCap, BriefcaseBusiness, Lightbulb } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import Logo from "../Logo.jsx";
 
@@ -10,6 +10,7 @@ const links = [
   ["Training", "/admin/trainings", GraduationCap],
   ["Opportunities", "/admin/opportunities", BriefcaseBusiness],
   ["Team", "/admin/team", Users],
+  ["Youth Innovation", "/admin/youth-innovators", Lightbulb],
   ["Gallery", "/admin/gallery", Image],
   ["Partners", "/admin/partners", Handshake],
   ["Messages", "/admin/messages", Mail]

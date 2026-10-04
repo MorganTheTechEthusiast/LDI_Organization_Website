@@ -4,6 +4,7 @@ import AdminLayout from "./components/admin/AdminLayout.jsx";
 import About from "./pages/About.jsx";
 import AdminResource from "./pages/admin/AdminResource.jsx";
 import Contact from "./pages/Contact.jsx";
+import GetInvolved from "./pages/GetInvolved.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import Gallery from "./pages/Gallery.jsx";
 import Home from "./pages/Home.jsx";
@@ -16,6 +17,7 @@ import ProgramDetail from "./pages/ProgramDetail.jsx";
 import Programs from "./pages/Programs.jsx";
 import Services from "./pages/Services.jsx";
 import Team from "./pages/Team.jsx";
+import YouthInnovation from "./pages/YouthInnovation.jsx";
 import VideoDetail from "./pages/VideoDetail.jsx";
 import Videos from "./pages/Videos.jsx";
 import Training from "./pages/Training.jsx";
@@ -42,9 +44,11 @@ export default function App() {
         <Route path="/news" element={<News />} />
         <Route path="/news/:slug" element={<NewsDetail />} />
         <Route path="/team" element={<Team />} />
+        <Route path="/youth-innovation" element={<YouthInnovation />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/partners" element={<Partners />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/get-involved" element={<GetInvolved />} />
       </Route>
       <Route path="/admin/login" element={<Login />} />
       <Route
@@ -62,6 +66,7 @@ export default function App() {
         <Route path="trainings" element={<AdminResource type="trainings" />} />
         <Route path="opportunities" element={<AdminResource type="opportunities" />} />
         <Route path="team" element={<AdminResource type="team" />} />
+        <Route path="youth-innovators" element={<AdminResource type="youthInnovators" />} />
         <Route path="gallery" element={<AdminResource type="gallery" />} />
         <Route path="partners" element={<AdminResource type="partners" />} />
         <Route path="messages" element={<AdminResource type="messages" />} />

@@ -32,6 +32,7 @@ export const endpoints = {
   trainings: "/trainings",
   opportunities: "/opportunities",
   team: "/team-members",
+  youthInnovators: "/youth-innovators",
   gallery: "/gallery",
   partners: "/partners",
   messages: "/contact-messages"

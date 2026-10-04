@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, CalendarDays, GraduationCap, Image, Mail, Newspaper, Users, Video } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, GraduationCap, Image, Lightbulb, Mail, Newspaper, Users, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
 import { Link } from "react-router-dom";
@@ -10,6 +10,7 @@ const cards = [
   ["Training", "/trainings", GraduationCap],
   ["Opportunities", "/opportunities", BriefcaseBusiness],
   ["Team", "/team-members", Users],
+  ["Youth Innovation", "/youth-innovators", Lightbulb],
   ["Gallery", "/gallery", Image],
   ["Messages", "/contact-messages", Mail]
 ];

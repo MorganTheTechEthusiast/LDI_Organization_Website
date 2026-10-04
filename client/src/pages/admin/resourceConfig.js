@@ -101,6 +101,24 @@ export const resourceConfig = {
       ["twitter", "Twitter / X URL", "url"]
     ]
   },
+  youthInnovators: {
+    title: "Youth Innovation Spotlight",
+    endpoint: "/youth-innovators",
+    columns: ["name", "role", "category", "location"],
+    required: ["name", "role", "category", "bio"],
+    fields: [
+      ["name", "Name"],
+      ["slug", "Slug"],
+      ["role", "Role / Headline"],
+      ["category", "Innovation Area", "select", ["Developer", "Designer", "Entrepreneur", "Creator", "STEM Innovator", "Digital Professional"]],
+      ["location", "Location", "select", ["Monrovia, Liberia", "Liberia", "West Africa", "Remote"]],
+      ["bio", "Spotlight Bio", "textarea"],
+      ["photo_url", "Photo URL", "url"],
+      ["website", "Website", "url"],
+      ["linkedin", "LinkedIn URL", "url"],
+      ["featured", "Featured Innovator", "select", ["1", "0"]]
+    ]
+  },
   gallery: {
     title: "Gallery",
     endpoint: "/gallery",
