@@ -35,6 +35,14 @@ const tableConfig = {
     order: "featured DESC, start_date ASC, id DESC",
     bySlug: true
   },
+  opportunities: {
+    table: "opportunities",
+    fields: ["title", "slug", "category", "organization", "description", "deadline", "location", "image_url", "opportunity_url", "status", "featured"],
+    required: ["title", "category", "description", "status"],
+    defaults: { image_url: "https://dummyimage.com/1200x800/6B0F1A/ffffff&text=LDI+Opportunity", featured: 0 },
+    order: "featured DESC, deadline ASC, id DESC",
+    bySlug: true
+  },
   "team-members": {
     table: "team_members",
     fields: ["name", "position", "bio", "photo_url", "linkedin", "twitter"],
@@ -67,7 +75,7 @@ function applyDefaults(body, defaults = {}) {
 }
 
 function normalizeRecord(path, body) {
-  if (path === "trainings") {
+  if (path === "trainings" || path === "opportunities") {
     body.featured = body.featured === true || body.featured === "true" || body.featured === 1 || body.featured === "1" ? 1 : 0;
   }
 }

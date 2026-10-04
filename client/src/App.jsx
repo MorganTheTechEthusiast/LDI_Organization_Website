@@ -10,6 +10,7 @@ import Home from "./pages/Home.jsx";
 import Login from "./pages/admin/Login.jsx";
 import News from "./pages/News.jsx";
 import NewsDetail from "./pages/NewsDetail.jsx";
+import Opportunities from "./pages/Opportunities.jsx";
 import Partners from "./pages/Partners.jsx";
 import ProgramDetail from "./pages/ProgramDetail.jsx";
 import Programs from "./pages/Programs.jsx";
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/video/:slug" element={<VideoDetail />} />
         <Route path="/training" element={<Training />} />
         <Route path="/training/:slug" element={<TrainingDetail />} />
+        <Route path="/opportunities" element={<Opportunities />} />
         <Route path="/news" element={<News />} />
         <Route path="/news/:slug" element={<NewsDetail />} />
         <Route path="/team" element={<Team />} />
@@ -58,6 +60,7 @@ export default function App() {
         <Route path="events" element={<AdminResource type="events" />} />
         <Route path="videos" element={<AdminResource type="videos" />} />
         <Route path="trainings" element={<AdminResource type="trainings" />} />
+        <Route path="opportunities" element={<AdminResource type="opportunities" />} />
         <Route path="team" element={<AdminResource type="team" />} />
         <Route path="gallery" element={<AdminResource type="gallery" />} />
         <Route path="partners" element={<AdminResource type="partners" />} />

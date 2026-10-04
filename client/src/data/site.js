@@ -1,4 +1,4 @@
-import { Award, GraduationCap, Handshake, Lightbulb, Megaphone, Mic, Newspaper, Radio, Rocket, ShieldCheck, Users, Wifi } from "lucide-react";
+import { Award, BookOpen, BriefcaseBusiness, GraduationCap, Handshake, Lightbulb, Megaphone, Mic, Newspaper, Radio, Rocket, ShieldCheck, Users, Wifi } from "lucide-react";
 
 export const services = [
   { icon: Newspaper, title: "Tech News & Updates", text: "Timely reporting on digital trends, tools, policy, startups, and technology culture in Liberia." },
@@ -21,8 +21,20 @@ export const values = [
 ];
 
 export const impact = [
-  ["5K+", "Digital community members reached"],
-  ["25+", "Programs, interviews, and media features"],
-  ["12+", "Schools and communities engaged"],
-  ["30+", "Startups and innovators amplified"]
+  ["5,000+", "Students Empowered"],
+  ["50+", "Digital Workshops Hosted"],
+  ["100+", "Tech Opportunities Shared"]
+];
+
+export const pillars = [
+  { icon: BookOpen, title: "Technology & Digital Literacy", text: "Practical learning experiences, workshops, and technical training programs that help young people build relevant digital skills." },
+  { icon: BriefcaseBusiness, title: "Digital Opportunities & Hubs", text: "Connecting young people to scholarships, tech hubs, career pathways, training opportunities, and global digital networks." },
+  { icon: Lightbulb, title: "Youth Innovation & Leadership", text: "Spotlighting and supporting young Liberian creators, entrepreneurs, innovators, and technology builders." }
+];
+
+export const opportunityTypes = [
+  { icon: GraduationCap, title: "Scholarships & Fellowships", text: "Find learning pathways and funding opportunities that help you take the next step." },
+  { icon: BriefcaseBusiness, title: "Jobs & Internships", text: "Discover practical ways to gain experience and connect with the digital economy." },
+  { icon: Rocket, title: "Hackathons & Grants", text: "Explore spaces to test ideas, build solutions, and meet collaborators." },
+  { icon: Radio, title: "Events & Training", text: "Stay close to workshops, programs, conversations, and community learning." }
 ];

@@ -1,6 +1,6 @@
-const CACHE_NAME = "ldi-pwa-v1";
+const CACHE_NAME = "ldi-pwa-v2";
 const OFFLINE_URL = "/offline.html";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/ldi-logo.svg", OFFLINE_URL];
+const APP_SHELL = ["/", "/manifest.webmanifest", "/ldi-official-logo.png", "/ldi-official-icon.png", OFFLINE_URL];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

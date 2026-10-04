@@ -1,12 +1,14 @@
-import { CalendarDays, GraduationCap, Image, Mail, Newspaper, Users, Video } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, GraduationCap, Image, Mail, Newspaper, Users, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
+import { Link } from "react-router-dom";
 
 const cards = [
   ["Posts", "/blog-posts", Newspaper],
   ["Events", "/events", CalendarDays],
   ["Videos", "/videos", Video],
   ["Training", "/trainings", GraduationCap],
+  ["Opportunities", "/opportunities", BriefcaseBusiness],
   ["Team", "/team-members", Users],
   ["Gallery", "/gallery", Image],
   ["Messages", "/contact-messages", Mail]
@@ -28,12 +30,12 @@ export default function Dashboard() {
         <h1 className="text-3xl font-black text-ink">Content Dashboard</h1>
       </div>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-        {cards.map(([label, , Icon]) => (
-          <div key={label} className="rounded-lg bg-white p-6 shadow-sm">
+        {cards.map(([label, endpoint, Icon]) => (
+          <Link to={`/admin${endpoint}`} key={label} className="rounded-lg bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
             <Icon className="mb-5 h-8 w-8 text-maroon" />
             <p className="text-4xl font-black text-ink">{counts[label] ?? "-"}</p>
             <p className="mt-1 text-sm font-bold text-black/55">{label}</p>
-          </div>
+          </Link>
         ))}
       </div>
       <div className="mt-8 rounded-lg bg-ink p-8 text-white">

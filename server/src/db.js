@@ -190,6 +190,24 @@ export async function initDb() {
   `);
 
   await run(`
+    CREATE TABLE IF NOT EXISTS opportunities (
+      id ${idColumn},
+      title TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      category TEXT NOT NULL,
+      organization TEXT,
+      description TEXT NOT NULL,
+      deadline TEXT,
+      location TEXT,
+      image_url TEXT NOT NULL,
+      opportunity_url TEXT,
+      status TEXT NOT NULL DEFAULT 'Open',
+      featured INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
     CREATE TABLE IF NOT EXISTS team_members (
       id ${idColumn},
       name TEXT NOT NULL,

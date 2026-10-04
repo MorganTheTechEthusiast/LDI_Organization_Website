@@ -1,30 +1,25 @@
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import Logo from "./Logo.jsx";
 import ThemeToggle from "./ThemeToggle.jsx";
 
 const links = [
-  ["About", "/about"],
-  ["Services", "/services"],
-  ["Programs", "/programs"],
-  ["Training", "/training"],
-  ["Video", "/video"],
-  ["News", "/news"],
-  ["Team", "/team"],
-  ["Gallery", "/gallery"],
-  ["Partners", "/partners"],
-  ["Contact", "/contact"]
+  ["About Us", "/about"],
+  ["Programs & Impact", "/programs"],
+  ["Digital Opportunities", "/opportunities"],
+  ["Youth Innovation", "/team"],
+  ["Insights / News", "/news"]
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const navClass = ({ isActive }) =>
-    `font-heading text-base font-bold transition ${isActive ? "text-ember" : "text-white/85 hover:text-white"}`;
+    `nav-link font-heading text-sm font-semibold transition ${isActive ? "is-active" : ""}`;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#252525] shadow-sm">
-      <nav className="container-tight flex h-[92px] items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="site-header sticky top-0 z-50">
+      <nav className="container-tight flex min-h-[76px] items-center justify-between gap-8 px-4 sm:px-6 lg:px-8">
         <Logo to="/" size="nav" />
         <div className="hidden items-center gap-9 lg:flex">
           {links.map(([label, href]) => (
@@ -33,22 +28,24 @@ export default function Navbar() {
             </NavLink>
           ))}
           <ThemeToggle />
+          <NavLink to="/contact" className="btn-crimson px-5 py-2.5 text-sm">Get Involved <ArrowRight className="h-4 w-4" /></NavLink>
         </div>
         <div className="flex items-center gap-2 lg:hidden">
           <ThemeToggle />
-          <button className="rounded-md p-2 text-white" onClick={() => setOpen((value) => !value)} aria-label="Toggle navigation">
+          <button className="mobile-menu-button" onClick={() => setOpen((value) => !value)} aria-label="Toggle navigation" aria-expanded={open}>
             {open ? <X /> : <Menu />}
           </button>
         </div>
       </nav>
       {open && (
-        <div className="border-t border-white/10 bg-[#252525] px-4 py-4 lg:hidden">
+        <div className="mobile-nav border-t border-black/10 px-4 py-5 lg:hidden">
           <div className="grid gap-3">
             {links.map(([label, href]) => (
               <NavLink key={href} to={href} className={navClass} onClick={() => setOpen(false)}>
                 {label}
               </NavLink>
             ))}
+            <NavLink to="/contact" className="btn-crimson mt-2 justify-center" onClick={() => setOpen(false)}>Get Involved <ArrowRight className="h-4 w-4" /></NavLink>
           </div>
         </div>
       )}

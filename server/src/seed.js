@@ -22,6 +22,7 @@ async function reset() {
   await run("DELETE FROM gallery");
   await run("DELETE FROM team_members");
   await run("DELETE FROM trainings");
+  await run("DELETE FROM opportunities");
   await run("DELETE FROM video_interviews");
   await run("DELETE FROM events");
   await run("DELETE FROM blog_posts");
@@ -191,6 +192,24 @@ async function seedTrainings() {
   }
 }
 
+async function seedOpportunities() {
+  const opportunities = [
+    ["Google Africa Developer Scholarship", "google-africa-developer-scholarship", "Scholarships", "Google", "A learning opportunity for aspiring developers to build practical skills through structured online courses and community support.", "2026-08-15", "Online", images.code, "https://grow.google/intl/africa/", "Open", 1],
+    ["LDI Creator Bootcamp", "ldi-creator-bootcamp", "Training", "Liberia Digital Insights", "A practical program for young creators learning content strategy, digital storytelling, personal branding, and responsible media production.", "2026-07-30", "Monrovia, Liberia", images.podcast, "/contact", "Open", 0],
+    ["Youth Innovation Challenge", "youth-innovation-challenge", "Competitions", "LDI Community", "Bring a technology idea that responds to a real community need and connect with peers, mentors, and ecosystem supporters.", "2026-09-05", "Monrovia, Liberia", images.startup, "/contact", "Open", 0],
+    ["Digital Skills Internship Pathway", "digital-skills-internship-pathway", "Internships", "LDI Partners", "A pathway for emerging digital professionals to gain hands-on experience in media, communications, design, and technology projects.", "2026-08-20", "Monrovia, Liberia", images.training, "/contact", "Closing Soon", 0],
+    ["Technology Community Events", "technology-community-events", "Events", "Liberia Tech Ecosystem", "Find conversations, workshops, meetups, and public technology events happening across Liberia's growing digital ecosystem.", "2026-10-01", "Liberia", images.outreach, "/contact", "Open", 0]
+  ];
+
+  for (const opportunity of opportunities) {
+    await run(
+      `INSERT INTO opportunities (title, slug, category, organization, description, deadline, location, image_url, opportunity_url, status, featured)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      opportunity
+    );
+  }
+}
+
 async function seedTeam() {
   const members = [
     ["Emmanuel S. Johnson", "CEO & Founder", "Leads LDI's mission to make technology information accessible, useful, and inspiring across Liberia.", images.team1, "https://linkedin.com", "https://x.com"],
@@ -242,6 +261,7 @@ async function main() {
   await seedEvents();
   await seedVideos();
   await seedTrainings();
+  await seedOpportunities();
   await seedTeam();
   await seedGallery();
   await seedPartners();

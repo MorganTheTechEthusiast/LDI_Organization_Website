@@ -22,13 +22,15 @@ const allowedOrigins = new Set([
   ...(process.env.CLIENT_ORIGIN || "")
     .split(",")
     .map(normalizeOrigin)
-    .filter(Boolean)
+    .filter(Boolean),
 ]);
 
 function isAllowedRailwayOrigin(origin) {
   try {
     const url = new URL(origin);
-    return url.protocol === "https:" && url.hostname.endsWith(".up.railway.app");
+    return (
+      url.protocol === "https:" && url.hostname.endsWith(".up.railway.app")
+    );
   } catch {
     return false;
   }
@@ -37,14 +39,18 @@ function isAllowedRailwayOrigin(origin) {
 const corsOptions = {
   origin(origin, callback) {
     const normalizedOrigin = normalizeOrigin(origin);
-    if (!normalizedOrigin || allowedOrigins.has(normalizedOrigin) || isAllowedRailwayOrigin(normalizedOrigin)) {
+    if (
+      !normalizedOrigin ||
+      allowedOrigins.has(normalizedOrigin) ||
+      isAllowedRailwayOrigin(normalizedOrigin)
+    ) {
       return callback(null, true);
     }
     return callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
@@ -63,9 +69,16 @@ app.use("/api", contactRouter);
 app.use((err, _req, res, _next) => {
   console.error(err);
   if (err.code === "SQLITE_CONSTRAINT") {
-    return res.status(409).json({ message: "That record conflicts with existing content. Please change the title or slug and try again." });
+    return res
+      .status(409)
+      .json({
+        message:
+          "That record conflicts with existing content. Please change the title or slug and try again.",
+      });
   }
-  return res.status(500).json({ message: "Something went wrong on the server." });
+  return res
+    .status(500)
+    .json({ message: "Something went wrong on the server." });
 });
 
 initDb()

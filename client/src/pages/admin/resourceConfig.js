@@ -65,6 +65,28 @@ export const resourceConfig = {
       ["featured", "Featured Training", "select", ["1", "0"]]
     ]
   },
+  opportunities: {
+    title: "Digital Opportunities",
+    endpoint: "/opportunities",
+    columns: ["title", "category", "deadline", "status"],
+    required: ["title", "category", "description", "status"],
+    fields: [
+      ["title", "Opportunity Title"],
+      ["slug", "Slug"],
+      ["category", "Category", "select", ["Technology", "Entrepreneurship", "Work", "Internships"]],
+      ["organization", "Organization"],
+      ["provider", "Provider"],
+      ["description", "Description", "textarea"],
+      ["deadline", "Deadline", "date"],
+      ["location", "Location", "select", ["Remote", "Online", "Monrovia, Liberia", "Liberia", "Nigeria", "Kenya", "Ghana", "South Africa"]],
+      ["image_url", "Image URL", "url"],
+      ["opportunity_url", "Opportunity URL", "url"],
+      ["source_url", "Source URL", "url"],
+      ["icon_type", "Icon Type", "select", ["code", "graduation-cap", "briefcase", "globe", "chart"]],
+      ["status", "Status", "select", ["Open", "Closing Soon", "Closed"]],
+      ["featured", "Featured Opportunity", "select", ["1", "0"]]
+    ]
+  },
   team: {
     title: "Team Members",
     endpoint: "/team-members",

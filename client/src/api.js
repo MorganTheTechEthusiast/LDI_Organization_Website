@@ -10,11 +10,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const requestUrl = error.config?.url || "";
+    if (error.response?.status === 401 && !requestUrl.includes("/auth/login")) {
+      localStorage.removeItem("ldi_token");
+      localStorage.removeItem("ldi_user");
+      if (window.location.pathname.startsWith("/admin") && window.location.pathname !== "/admin/login") {
+        window.location.assign("/admin/login");
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const endpoints = {
   posts: "/blog-posts",
   events: "/events",
   videos: "/videos",
   trainings: "/trainings",
+  opportunities: "/opportunities",
   team: "/team-members",
   gallery: "/gallery",
   partners: "/partners",
