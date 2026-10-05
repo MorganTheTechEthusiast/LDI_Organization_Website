@@ -2,7 +2,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
-import { initDb } from "./db.js";
+import { closeDb, initDb } from "./db.js";
 import { authRouter } from "./routes/auth.js";
 import { contactRouter } from "./routes/contact.js";
 import { crudRouter } from "./routes/crud.js";
@@ -10,7 +10,8 @@ import { crudRouter } from "./routes/crud.js";
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5050;
+const port = Number(process.env.PORT || 5050);
+const host = process.env.HOST || "0.0.0.0";
 
 function normalizeOrigin(origin) {
   return origin?.trim().replace(/\/$/, "");
@@ -18,6 +19,8 @@ function normalizeOrigin(origin) {
 
 const allowedOrigins = new Set([
   "http://localhost:5173",
+  "https://liberiadigitalinsights.com",
+  "https://www.liberiadigitalinsights.com",
   "https://liberiadigitalinsights.up.railway.app",
   ...(process.env.CLIENT_ORIGIN || "")
     .split(",")
@@ -83,8 +86,25 @@ app.use((err, _req, res, _next) => {
 
 initDb()
   .then(() => {
-    app.listen(port, "0.0.0.0", () => {
+    const server = app.listen(port, host, () => {
       console.log(`LDI API running on port ${port}`);
+    });
+
+    server.on("error", async (error) => {
+      if (error.code === "EADDRINUSE") {
+        console.error(
+          `Port ${port} is already in use. Stop the other process or start this server with a different PORT.`
+        );
+      } else {
+        console.error("Server failed to start.");
+        console.error(error);
+      }
+
+      await closeDb().catch((closeError) => {
+        console.error("Failed to close database connection after startup error.");
+        console.error(closeError);
+      });
+      process.exit(1);
     });
   })
   .catch((error) => {

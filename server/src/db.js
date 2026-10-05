@@ -5,26 +5,39 @@ import pg from "pg";
 import sqlite3 from "sqlite3";
 import { fileURLToPath } from "url";
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dataDir = path.join(__dirname, "..", "data");
-const dbPath = path.join(dataDir, "ldi.sqlite");
-const dbClient = (process.env.DB_CLIENT || "sqlite").toLowerCase();
-const postgresUrl =
-  process.env.DATABASE_URL ||
-  process.env.POSTGRES_URL ||
-  process.env.POSTGRES_DATABASE_URL ||
-  process.env.DATABASE_PUBLIC_URL;
+const envDir = path.resolve(__dirname, "..");
+dotenv.config({ path: path.join(envDir, ".env") });
 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+const dbClient = String(process.env.DB_CLIENT || "").trim().toLowerCase();
+const postgresUrl = String(process.env.DATABASE_URL || "").trim();
+const configuredSqlitePath = String(process.env.SQLITE_PATH || "").trim();
+
+if (!dbClient || !["sqlite", "postgres"].includes(dbClient)) {
+  throw new Error("DB_CLIENT must be explicitly set to either 'sqlite' or 'postgres' in server/.env.");
+}
+
+if (dbClient === "postgres" && !postgresUrl) {
+  throw new Error("DB_CLIENT=postgres requires DATABASE_URL in server/.env or the production environment.");
+}
+
+if (dbClient === "sqlite" && !configuredSqlitePath) {
+  throw new Error("DB_CLIENT=sqlite requires SQLITE_PATH in server/.env.");
+}
+
+const sqlitePath = path.isAbsolute(configuredSqlitePath)
+  ? configuredSqlitePath
+  : path.resolve(envDir, configuredSqlitePath);
+const sqliteDir = path.dirname(sqlitePath);
+
+if (dbClient === "sqlite" && !fs.existsSync(sqliteDir)) {
+  fs.mkdirSync(sqliteDir, { recursive: true });
 }
 
 sqlite3.verbose();
 
-const sqliteDb = dbClient === "sqlite" ? new sqlite3.Database(process.env.SQLITE_PATH || dbPath) : null;
+const sqliteDb = dbClient === "sqlite" ? new sqlite3.Database(sqlitePath) : null;
 const pgPool =
   dbClient === "postgres"
     ? createPostgresPool()
@@ -35,12 +48,6 @@ export const db = {
 };
 
 function createPostgresPool() {
-  if (!postgresUrl) {
-    throw new Error(
-      "DB_CLIENT=postgres requires DATABASE_URL. In Railway, add DATABASE_URL as a reference to your PostgreSQL service connection string."
-    );
-  }
-
   return new pg.Pool({
     connectionString: postgresUrl,
     ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined

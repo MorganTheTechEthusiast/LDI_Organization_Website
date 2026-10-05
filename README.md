@@ -55,7 +55,7 @@ VITE_API_URL=https://ldi-backend.up.railway.app/api
 Railway backend variables:
 
 ```text
-CLIENT_ORIGIN=https://liberiadigitalinsights.up.railway.app
+CLIENT_ORIGIN=https://liberiadigitalinsights.com,https://www.liberiadigitalinsights.com,https://liberiadigitalinsights.up.railway.app
 DB_CLIENT=postgres
 DATABASE_URL=your_railway_postgres_url
 ```
