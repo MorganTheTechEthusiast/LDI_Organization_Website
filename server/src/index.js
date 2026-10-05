@@ -39,12 +39,26 @@ function isAllowedRailwayOrigin(origin) {
   }
 }
 
+function isAllowedProductionOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "liberiadigitalinsights.com" ||
+        url.hostname.endsWith(".liberiadigitalinsights.com"))
+    );
+  } catch {
+    return false;
+  }
+}
+
 const corsOptions = {
   origin(origin, callback) {
     const normalizedOrigin = normalizeOrigin(origin);
     if (
       !normalizedOrigin ||
       allowedOrigins.has(normalizedOrigin) ||
+      isAllowedProductionOrigin(normalizedOrigin) ||
       isAllowedRailwayOrigin(normalizedOrigin)
     ) {
       return callback(null, true);

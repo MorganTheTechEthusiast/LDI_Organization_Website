@@ -12,10 +12,10 @@ dotenv.config({ path: path.join(envDir, ".env") });
 
 const postgresUrl = String(process.env.DATABASE_URL || "").trim();
 const configuredSqlitePath = String(process.env.SQLITE_PATH || "").trim();
-const dbClient = String(process.env.DB_CLIENT || "").trim().toLowerCase();
+const dbClient = postgresUrl ? "postgres" : configuredSqlitePath ? "sqlite" : "";
 
 if (!dbClient || !["sqlite", "postgres"].includes(dbClient)) {
-  throw new Error("DB_CLIENT must be explicitly set to either 'sqlite' or 'postgres'.");
+  throw new Error("Set DATABASE_URL for PostgreSQL or SQLITE_PATH for SQLite in the environment.");
 }
 
 if (dbClient === "postgres" && !postgresUrl) {

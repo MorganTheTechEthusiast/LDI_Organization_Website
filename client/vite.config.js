@@ -14,6 +14,7 @@ export default defineConfig({
       "liberiadigitalinsights.up.railway.app",
       "ldi.up.railway.app",
       "liberiadigitalinsights.com",
+      "ldi-backend2.up.railway.app",
     ],
   },
 });
