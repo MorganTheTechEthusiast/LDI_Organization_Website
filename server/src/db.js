@@ -1,21 +1,20 @@
 import fs from "fs";
 import path from "path";
-import dotenv from "dotenv";
+import "./config.js";
 import pg from "pg";
-import sqlite3 from "sqlite3";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const envDir = path.resolve(__dirname, "..");
-dotenv.config({ path: path.join(envDir, ".env") });
 
 const postgresUrl = String(process.env.DATABASE_URL || "").trim();
 const configuredSqlitePath = String(process.env.SQLITE_PATH || "").trim();
-const dbClient = postgresUrl ? "postgres" : configuredSqlitePath ? "sqlite" : "";
+const dbClient = process.env.DB_CLIENT?.trim().toLowerCase() ||
+  (postgresUrl ? "postgres" : configuredSqlitePath ? "sqlite" : "");
 
 if (!dbClient || !["sqlite", "postgres"].includes(dbClient)) {
-  throw new Error("Set DATABASE_URL for PostgreSQL or SQLITE_PATH for SQLite in the environment.");
+  throw new Error("Set DB_CLIENT to postgres or sqlite, with DATABASE_URL or SQLITE_PATH respectively.");
 }
 
 if (dbClient === "postgres" && !postgresUrl) {
@@ -26,7 +25,7 @@ if (dbClient === "sqlite" && !configuredSqlitePath) {
   throw new Error("SQLite requires SQLITE_PATH in server/.env. Set DATABASE_URL in production to use Postgres.");
 }
 
-const sqlitePath = path.isAbsolute(configuredSqlitePath)
+const sqlitePath = configuredSqlitePath === ":memory:" || path.isAbsolute(configuredSqlitePath)
   ? configuredSqlitePath
   : path.resolve(envDir, configuredSqlitePath);
 const sqliteDir = path.dirname(sqlitePath);
@@ -35,9 +34,12 @@ if (dbClient === "sqlite" && !fs.existsSync(sqliteDir)) {
   fs.mkdirSync(sqliteDir, { recursive: true });
 }
 
-sqlite3.verbose();
-
-const sqliteDb = dbClient === "sqlite" ? new sqlite3.Database(sqlitePath) : null;
+let sqliteDb = null;
+if (dbClient === "sqlite") {
+  const { default: sqlite3 } = await import("sqlite3");
+  sqlite3.verbose();
+  sqliteDb = new sqlite3.Database(sqlitePath);
+}
 const pgPool =
   dbClient === "postgres"
     ? createPostgresPool()

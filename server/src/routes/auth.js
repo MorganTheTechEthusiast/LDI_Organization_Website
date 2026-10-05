@@ -1,3 +1,4 @@
+import { config } from "../config.js";
 import bcrypt from "bcryptjs";
 import express from "express";
 import jwt from "jsonwebtoken";
@@ -19,7 +20,7 @@ authRouter.post("/login", async (req, res, next) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, name: user.name },
-      process.env.JWT_SECRET || "ldi-dev-secret",
+      config.jwtSecret,
       { expiresIn: "8h" }
     );
 

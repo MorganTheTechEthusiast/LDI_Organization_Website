@@ -1,5 +1,5 @@
 import cors from "cors";
-import dotenv from "dotenv";
+import { config } from "./config.js";
 import express from "express";
 import morgan from "morgan";
 import { closeDb, initDb } from "./db.js";
@@ -7,59 +7,21 @@ import { authRouter } from "./routes/auth.js";
 import { contactRouter } from "./routes/contact.js";
 import { crudRouter } from "./routes/crud.js";
 
-dotenv.config();
-
 const app = express();
-const port = Number(process.env.PORT || 5050);
-const host = process.env.HOST || "0.0.0.0";
+const { port, host } = config;
 
 function normalizeOrigin(origin) {
   return origin?.trim().replace(/\/$/, "");
 }
 
-const allowedOrigins = new Set([
-  "http://localhost:5173",
-  "https://liberiadigitalinsights.com",
-  "https://www.liberiadigitalinsights.com",
-  "https://liberiadigitalinsights.up.railway.app",
-  ...(process.env.CLIENT_ORIGIN || "")
-    .split(",")
-    .map(normalizeOrigin)
-    .filter(Boolean),
-]);
-
-function isAllowedRailwayOrigin(origin) {
-  try {
-    const url = new URL(origin);
-    return (
-      url.protocol === "https:" && url.hostname.endsWith(".up.railway.app")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function isAllowedProductionOrigin(origin) {
-  try {
-    const url = new URL(origin);
-    return (
-      url.protocol === "https:" &&
-      (url.hostname === "liberiadigitalinsights.com" ||
-        url.hostname.endsWith(".liberiadigitalinsights.com"))
-    );
-  } catch {
-    return false;
-  }
-}
+const allowedOrigins = new Set(config.clientOrigins);
 
 const corsOptions = {
   origin(origin, callback) {
     const normalizedOrigin = normalizeOrigin(origin);
     if (
       !normalizedOrigin ||
-      allowedOrigins.has(normalizedOrigin) ||
-      isAllowedProductionOrigin(normalizedOrigin) ||
-      isAllowedRailwayOrigin(normalizedOrigin)
+      allowedOrigins.has(normalizedOrigin)
     ) {
       return callback(null, true);
     }

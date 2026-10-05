@@ -1,3 +1,4 @@
+import { config } from "../config.js";
 import jwt from "jsonwebtoken";
 
 export function requireAuth(req, res, next) {
@@ -9,7 +10,7 @@ export function requireAuth(req, res, next) {
   }
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET || "ldi-dev-secret");
+    req.user = jwt.verify(token, config.jwtSecret);
     return next();
   } catch {
     return res.status(401).json({ message: "Invalid or expired token." });

@@ -6,14 +6,14 @@ A production-ready full-stack website for Liberia Digital Insights, a Liberian t
 
 - React, React Router, Tailwind CSS, Vite
 - Node.js, Express.js
-- SQLite
+- SQLite or PostgreSQL, selected through environment variables
 - JWT-based admin authentication
 
 ## Project Structure
 
 ```text
 client/   React frontend and admin dashboard
-server/   Express API, SQLite database, seed data
+server/   Express API, database access, seed data
 ```
 
 ## Getting Started
@@ -24,7 +24,10 @@ Install dependencies:
 npm install
 ```
 
-Seed the SQLite database:
+Copy `server/.env.example` to `server/.env` and `client/.env.example` to
+`client/.env`, then adjust their settings. Do not overwrite an existing `.env`.
+
+Seed the configured database (this resets existing data):
 
 ```bash
 npm run seed
@@ -59,6 +62,53 @@ CLIENT_ORIGIN=https://liberiadigitalinsights.com,https://www.liberiadigitalinsig
 DB_CLIENT=postgres
 DATABASE_URL=your_railway_postgres_url
 ```
+
+## Environment configuration
+
+The server reads `server/.env` regardless of the command's working directory.
+Deployment environment variables take precedence over that file. Restart the
+server after changing its environment.
+
+| Server variable | Purpose / default |
+| --- | --- |
+| `PORT` | API port, default `5050` |
+| `HOST` | Bind address, default `0.0.0.0` |
+| `CLIENT_ORIGIN` | Comma-separated exact frontend origins; default `http://localhost:5173` |
+| `DB_CLIENT` | `sqlite` or `postgres`; when empty, selects PostgreSQL if `DATABASE_URL` exists, otherwise SQLite if `SQLITE_PATH` exists |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SQLITE_PATH` | SQLite file path, relative to `server/` or absolute |
+| `PGSSL` | Set `true` if the PostgreSQL provider requires SSL |
+| `JWT_SECRET` | Token signing secret; set a strong private value in production |
+
+Only origins listed in `CLIENT_ORIGIN` receive cross-origin access. Include every
+frontend origin you use, including its protocol and nonstandard port.
+
+The frontend reads `client/.env` and Vite mode files such as
+`client/.env.production`. Deployment variables take precedence.
+
+| Client variable | Purpose / default |
+| --- | --- |
+| `VITE_API_URL` | Browser API base URL including `/api`; defaults to same-origin `/api` |
+| `API_PROXY_TARGET` | API server origin for the Vite development/preview proxy; default `http://127.0.0.1:5050` |
+| `CLIENT_PORT` | Development port, default `5173` |
+| `PREVIEW_PORT` | Preview/start port, default `4173` |
+| `PORT` | Hosting port override for preview/start |
+| `HOST` | Bind address; development defaults to `localhost`, preview to `0.0.0.0` |
+| `ALLOWED_HOSTS` | Comma-separated additional frontend hostnames, without protocols or paths |
+
+For example, to run the API on `6060` and frontend on `3000`, set server
+`PORT=6060` and `CLIENT_ORIGIN=http://localhost:3000`, then set client
+`CLIENT_PORT=3000`, `API_PROXY_TARGET=http://127.0.0.1:6060`, and
+`VITE_API_URL=/api`. Start both with `npm run dev`.
+
+For separate production deployments, set `VITE_API_URL` to the backend's full
+API URL **before `npm run build`**, set the backend's `CLIENT_ORIGIN` to the
+frontend origin, and add the frontend hostname to `ALLOWED_HOSTS` when using
+Vite preview. Static hosting with `/api` requires an equivalent reverse proxy.
+`VITE_` variables are public and embedded at build time: never put secrets in
+them. Changing them requires rebuilding the frontend. Other client settings
+require restarting Vite. `npm run start --workspace client` works on Windows
+and Linux and reads its port from the environment.
 
 ## Admin Login
 
@@ -121,4 +171,4 @@ Admin endpoints require a bearer token:
 
 ## Notes
 
-The app uses image URLs for content management, making it simple to deploy before adding a file upload provider. The database file is created at `server/data/ldi.sqlite`.
+The app uses image URLs for content management, making it simple to deploy before adding a file upload provider. When SQLite is selected, its database file is created at the configured `SQLITE_PATH`.
