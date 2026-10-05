@@ -10,20 +10,20 @@ const __dirname = path.dirname(__filename);
 const envDir = path.resolve(__dirname, "..");
 dotenv.config({ path: path.join(envDir, ".env") });
 
-const dbClient = String(process.env.DB_CLIENT || "").trim().toLowerCase();
 const postgresUrl = String(process.env.DATABASE_URL || "").trim();
 const configuredSqlitePath = String(process.env.SQLITE_PATH || "").trim();
+const dbClient = String(process.env.DB_CLIENT || "").trim().toLowerCase();
 
 if (!dbClient || !["sqlite", "postgres"].includes(dbClient)) {
-  throw new Error("DB_CLIENT must be explicitly set to either 'sqlite' or 'postgres' in server/.env.");
+  throw new Error("DB_CLIENT must be explicitly set to either 'sqlite' or 'postgres'.");
 }
 
 if (dbClient === "postgres" && !postgresUrl) {
-  throw new Error("DB_CLIENT=postgres requires DATABASE_URL in server/.env or the production environment.");
+  throw new Error("Postgres requires DATABASE_URL in server/.env or the production environment.");
 }
 
 if (dbClient === "sqlite" && !configuredSqlitePath) {
-  throw new Error("DB_CLIENT=sqlite requires SQLITE_PATH in server/.env.");
+  throw new Error("SQLite requires SQLITE_PATH in server/.env. Set DATABASE_URL in production to use Postgres.");
 }
 
 const sqlitePath = path.isAbsolute(configuredSqlitePath)
