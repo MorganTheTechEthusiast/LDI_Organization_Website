@@ -110,6 +110,37 @@ them. Changing them requires rebuilding the frontend. Other client settings
 require restarting Vite. `npm run start --workspace client` works on Windows
 and Linux and reads its port from the environment.
 
+## Railway routing troubleshooting
+
+If Railway shows `Application failed to respond`, compare each domain's target
+port under **Settings → Networking** with that service's listening port in the
+deployment logs. The frontend and backend are separate services and may use
+different ports. For a frontend listening on `8080` and backend configured with
+`PORT=5050`, use target ports `8080` and `5050` respectively. Both services must
+bind to `0.0.0.0`; set `HOST=0.0.0.0` if needed.
+
+For the current deployment, the frontend variables should include:
+
+```dotenv
+VITE_API_URL=https://ldi-backend2.up.railway.app/api
+ALLOWED_HOSTS=liberiadigitalinsights.com,www.liberiadigitalinsights.com
+HOST=0.0.0.0
+```
+
+The backend's `CLIENT_ORIGIN` must list the frontend origins, for example:
+
+```dotenv
+CLIENT_ORIGIN=https://liberiadigitalinsights.com,https://www.liberiadigitalinsights.com
+```
+
+Keep any additional frontend origins you actually use in that list. A bare
+hostname such as `ldi-backend2.up.railway.app/api` is not a valid `VITE_API_URL`.
+After correcting it, rebuild and redeploy the frontend; restarting an existing
+build does not replace its embedded API URL. Confirm the backend's `/api/health`
+returns successfully before testing frontend data loading. If routing matches
+but the backend still returns 502, inspect its deployment logs for startup or
+database connection errors.
+
 ## Admin Login
 
 ```text

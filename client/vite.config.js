@@ -12,8 +12,28 @@ function portNumber(value, fallback, name) {
   return port;
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = { ...loadEnv(mode, clientDir, ""), ...process.env };
+  // A hostname without a protocol becomes a path on the frontend domain.
+  // Catch this during builds instead of shipping broken API requests.
+  if (command === "build") {
+    const apiUrl = env.VITE_API_URL?.trim();
+    if (apiUrl && !/^\/(?!\/)/.test(apiUrl)) {
+      let valid = false;
+      try {
+        const url = new URL(apiUrl);
+        valid = /^https?:\/\//i.test(apiUrl) &&
+          ["http:", "https:"].includes(url.protocol) && Boolean(url.hostname);
+      } catch {
+        // Report a configuration error without exposing the supplied value.
+      }
+      if (!valid) {
+        throw new Error(
+          "VITE_API_URL must be an absolute http:// or https:// URL (including /api), or a root-relative path such as /api. Update the frontend environment variable and rebuild."
+        );
+      }
+    }
+  }
   const allowedHosts = (env.ALLOWED_HOSTS || "")
     .split(",")
     .map((host) => host.trim())
