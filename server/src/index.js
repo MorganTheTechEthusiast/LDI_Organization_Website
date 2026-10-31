@@ -1,5 +1,5 @@
 import cors from "cors";
-import { config } from "./config.js";
+import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
 import { closeDb, initDb } from "./db.js";
@@ -7,21 +7,43 @@ import { authRouter } from "./routes/auth.js";
 import { contactRouter } from "./routes/contact.js";
 import { crudRouter } from "./routes/crud.js";
 
+dotenv.config();
+
 const app = express();
-const { port, host } = config;
+const port = Number(process.env.PORT || 5050);
+const host = process.env.HOST || "0.0.0.0";
 
 function normalizeOrigin(origin) {
   return origin?.trim().replace(/\/$/, "");
 }
 
-const allowedOrigins = new Set(config.clientOrigins);
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "https://liberiadigitalinsights.up.railway.app",
+  ...(process.env.CLIENT_ORIGIN || "")
+    .split(",")
+    .map(normalizeOrigin)
+    .filter(Boolean),
+]);
+
+function isAllowedRailwayOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" && url.hostname.endsWith(".up.railway.app")
+    );
+  } catch {
+    return false;
+  }
+}
 
 const corsOptions = {
   origin(origin, callback) {
     const normalizedOrigin = normalizeOrigin(origin);
     if (
       !normalizedOrigin ||
-      allowedOrigins.has(normalizedOrigin)
+      allowedOrigins.has(normalizedOrigin) ||
+      isAllowedRailwayOrigin(normalizedOrigin)
     ) {
       return callback(null, true);
     }
