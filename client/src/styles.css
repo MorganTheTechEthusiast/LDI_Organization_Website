@@ -145,6 +145,11 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .story-card-image > span { position: absolute; left: 16px; top: 16px; padding: 5px 9px; background: #6b0f1a; color: white; font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .story-card-content { padding: 23px; }
 .story-card-content .eyebrow { margin: 0; }
+.home-program-card { display: flex; flex-direction: column; }
+.home-program-card .story-card-content { display: flex; flex: 1; flex-direction: column; min-height: 275px; }
+.home-program-card h3 { display: -webkit-box; min-height: 3.2rem; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.home-program-description { display: -webkit-box; min-height: 4.9rem; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.home-program-link { margin-top: auto; }
 .program-card-content { min-height: 345px; }
 .program-card-meta { min-height: 30px; }
 .program-card-meta > span:last-child { white-space: nowrap; }
