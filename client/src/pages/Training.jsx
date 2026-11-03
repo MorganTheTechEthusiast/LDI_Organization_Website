@@ -11,7 +11,7 @@ export default function Training() {
 
   return (
     <>
-      <section className="section-pad bg-ink text-white">
+      <section className="section-pad brand-dark-surface text-white">
         <div className="container-tight grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div>
             <p className="mb-4 font-heading text-sm font-black uppercase text-ember">#Training</p>

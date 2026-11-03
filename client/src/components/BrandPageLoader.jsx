@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Logo from "./Logo.jsx";
 
-const INITIAL_DURATION = 900;
-const ROUTE_DURATION = 520;
+const INITIAL_DURATION = 1400;
+const ROUTE_DURATION = 850;
 
 export default function BrandPageLoader() {
   const { pathname } = useLocation();

@@ -9,7 +9,7 @@ export default function NewsDetail() {
 
   return (
     <article className="bg-white">
-      <header className="section-pad bg-ink text-white">
+      <header className="section-pad brand-dark-surface text-white">
         <div className="container-tight max-w-4xl">
           <p className="mb-4 text-sm font-black uppercase text-ember">{post.category}</p>
           <h1 className="text-4xl font-black sm:text-6xl">{post.title}</h1>

@@ -10,7 +10,7 @@ export default function Videos() {
   const remaining = videos.slice(1);
 
   return (
-    <section className="section-pad bg-[#282828] text-white">
+    <section className="section-pad brand-dark-surface text-white">
       <SectionHeader light eyebrow="Video" title="Video Interviews" text="Conversations with founders, creators, educators, innovators, and digital leaders shaping Liberia's technology ecosystem." />
 
       {featured && (

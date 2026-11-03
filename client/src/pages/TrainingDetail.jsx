@@ -12,7 +12,7 @@ export default function TrainingDetail() {
 
   return (
     <article className="bg-white dark:bg-[#0f0f11]">
-      <header className="section-pad bg-ink text-white">
+      <header className="section-pad brand-dark-surface text-white">
         <div className="container-tight">
           <Link to="/training" className="mb-8 inline-flex items-center gap-2 font-heading text-sm font-black uppercase text-white/70 transition hover:text-ember">
             <ArrowLeft className="h-4 w-4" /> Back to Training

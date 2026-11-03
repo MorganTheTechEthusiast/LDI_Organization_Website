@@ -9,7 +9,7 @@ export default function VideoDetail() {
   const embedUrl = getVideoEmbedUrl(video.video_url);
 
   return (
-    <article className="bg-[#282828] text-white">
+    <article className="brand-dark-surface text-white">
       <header className="section-pad">
         <div className="container-tight">
           <Link to="/video" className="mb-8 inline-flex items-center gap-2 font-heading text-sm font-black uppercase text-white/65 transition hover:text-ember">
