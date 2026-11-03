@@ -219,6 +219,8 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .people-grid .card:hover { transform: translateY(-5px); border-color: #e05a2b; box-shadow: 0 16px 35px rgba(107,15,26,.1); }
 .people-grid .card img { height: 280px; }
 .people-grid .card > div { padding: 19px; }
+.team-card-content { min-height: 214px; }
+.team-card-bio { display: -webkit-box; max-height: 76px; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 .people-grid .card h3 { font-size: 19px; }
 .people-grid .card p { font-size: 12px; line-height: 1.6; }
 .gallery-grid { display: grid; grid-template-columns: repeat(4,1fr); grid-auto-rows: 230px; gap: 12px; }
