@@ -8,6 +8,22 @@ html { scroll-behavior: smooth; }
 body { margin: 0; background: #f8f9fa; font-family: var(--font-brand); font-size: 15px; font-weight: 400; line-height: 1.65; text-rendering: optimizeLegibility; transition: background-color .25s ease, color .25s ease; }
 img { max-width: 100%; }
 .logo-image { display: block; max-width: min(100%, 340px); object-fit: contain; object-position: center; }
+.brand-loader { position: fixed; z-index: 100; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8f9fa; color: #6b0f1a; animation: loader-fade-in .24s ease both; }
+.brand-loader-mark { position: relative; display: grid; place-items: center; width: min(220px, 54vw); }
+.brand-loader-mark .logo-image { position: relative; z-index: 1; width: min(190px, 48vw); height: auto; animation: loader-logo-in .72s cubic-bezier(.22,.8,.24,1) both; }
+.brand-loader-ring { position: absolute; width: 82px; height: 82px; border: 1px solid rgba(224,90,43,.18); border-top-color: #e05a2b; border-radius: 50%; animation: loader-ring-spin 1.4s linear infinite; }
+.brand-loader-tagline { margin: 25px 0 0; color: #6b0f1a; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; animation: loader-text-in .55s .15s ease both; }
+.brand-loader-line { width: 72px; height: 2px; margin-top: 17px; background: #e05a2b; transform-origin: center; animation: loader-line-in .6s .24s ease both; }
+.brand-loader-route .brand-loader-mark .logo-image { animation-duration: .48s; }
+.brand-loader-route .brand-loader-tagline { animation-delay: .06s; }
+@keyframes loader-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes loader-logo-in { from { opacity: 0; transform: perspective(500px) scale(.82) rotateY(-90deg) rotate(-8deg); } to { opacity: 1; transform: perspective(500px) scale(1) rotateY(0) rotate(0); } }
+@keyframes loader-ring-spin { to { transform: rotate(360deg); } }
+@keyframes loader-text-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes loader-line-in { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .brand-loader, .brand-loader-mark .logo-image, .brand-loader-ring, .brand-loader-tagline, .brand-loader-line { animation: none; }
+}
 h1,h2,h3,h4,h5,h6,nav,button,.label { font-family: var(--font-brand); letter-spacing: 0; }
 h1,h2 { font-weight: 800; }
 h3,h4,h5,h6 { font-weight: 700; }
