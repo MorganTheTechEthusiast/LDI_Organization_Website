@@ -6,6 +6,7 @@ import { closeDb, initDb } from "./db.js";
 import { authRouter } from "./routes/auth.js";
 import { contactRouter } from "./routes/contact.js";
 import { crudRouter } from "./routes/crud.js";
+import { uploadsRouter } from "./routes/uploads.js";
 
 dotenv.config();
 
@@ -65,17 +66,16 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api", crudRouter);
+app.use("/api/uploads", uploadsRouter);
 app.use("/api", contactRouter);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
   if (err.code === "SQLITE_CONSTRAINT") {
-    return res
-      .status(409)
-      .json({
-        message:
-          "That record conflicts with existing content. Please change the title or slug and try again.",
-      });
+    return res.status(409).json({
+      message:
+        "That record conflicts with existing content. Please change the title or slug and try again.",
+    });
   }
   return res
     .status(500)
@@ -91,7 +91,7 @@ initDb()
     server.on("error", async (error) => {
       if (error.code === "EADDRINUSE") {
         console.error(
-          `Port ${port} is already in use. Stop the other process or start this server with a different PORT.`
+          `Port ${port} is already in use. Stop the other process or start this server with a different PORT.`,
         );
       } else {
         console.error("Server failed to start.");
@@ -99,7 +99,9 @@ initDb()
       }
 
       await closeDb().catch((closeError) => {
-        console.error("Failed to close database connection after startup error.");
+        console.error(
+          "Failed to close database connection after startup error.",
+        );
         console.error(closeError);
       });
       process.exit(1);

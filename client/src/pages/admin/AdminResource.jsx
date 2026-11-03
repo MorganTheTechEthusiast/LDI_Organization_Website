@@ -1,6 +1,6 @@
 import { Edit, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../../api.js";
+import { api, uploadImage } from "../../api.js";
 import { resourceConfig } from "./resourceConfig.js";
 
 function blank(fields) {
@@ -17,6 +17,7 @@ export default function AdminResource({ type }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploadingField, setUploadingField] = useState("");
 
   async function load() {
     const { data } = await api.get(config.endpoint);
@@ -49,6 +50,22 @@ export default function AdminResource({ type }) {
     setError("");
     setMessage("");
     setOpen(true);
+  }
+
+  async function handleImageUpload(name, file) {
+    if (!file) return;
+    setError("");
+    setMessage("");
+    try {
+      setUploadingField(name);
+      const url = await uploadImage(file);
+      setForm((current) => ({ ...current, [name]: url }));
+      setMessage("Image uploaded to Cloudinary.");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Image upload failed. Check Cloudinary configuration.");
+    } finally {
+      setUploadingField("");
+    }
   }
 
   async function save(event) {
@@ -142,7 +159,13 @@ export default function AdminResource({ type }) {
                   <span className="label">
                     {label} {(config.required || []).includes(name) && <span className="text-maroon">*</span>}
                   </span>
-                  {inputType === "textarea" ? (
+                  {inputType === "image" ? (
+                    <div className="grid gap-2">
+                      <input className="field" type="file" accept="image/*" onChange={(e) => handleImageUpload(name, e.target.files?.[0])} disabled={Boolean(uploadingField)} />
+                      {uploadingField === name && <span className="text-xs font-semibold text-maroon">Uploading image...</span>}
+                      {form[name] && <input className="field" type="url" value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} placeholder="Cloudinary image URL" />}
+                    </div>
+                  ) : inputType === "textarea" ? (
                     <textarea className="field min-h-28" value={form[name] || ""} onChange={(e) => setForm({ ...form, [name]: e.target.value })} />
                   ) : inputType === "select" ? (
                     <select className="field" value={form[name] || options[0]} onChange={(e) => setForm({ ...form, [name]: e.target.value })}>

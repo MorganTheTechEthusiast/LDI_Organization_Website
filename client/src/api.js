@@ -4,6 +4,13 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "") || "/api"
 });
 
+export async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append("image", file);
+  const { data } = await api.post("/uploads/images", formData);
+  return data.url;
+}
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("ldi_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;

@@ -10,7 +10,7 @@ export const resourceConfig = {
       ["category", "Category"],
       ["author", "Author"],
       ["date", "Date", "date"],
-      ["image_url", "Featured Image URL", "url"],
+      ["image_url", "Featured Image", "image"],
       ["summary", "Short Summary", "textarea"],
       ["content", "Full Content", "textarea"]
     ]
@@ -23,7 +23,7 @@ export const resourceConfig = {
     fields: [
       ["title", "Title"],
       ["date", "Date", "date"],
-      ["image_url", "Image URL", "url"],
+      ["image_url", "Image", "image"],
       ["status", "Status", "select", ["Upcoming", "Ongoing", "Completed"]],
       ["description", "Short Description", "textarea"]
     ]
@@ -40,7 +40,7 @@ export const resourceConfig = {
       ["guest_name", "Guest Name"],
       ["guest_title", "Guest Title"],
       ["date", "Date", "date"],
-      ["thumbnail_url", "Thumbnail Image URL", "url"],
+      ["thumbnail_url", "Thumbnail Image", "image"],
       ["video_url", "Video URL", "url"],
       ["summary", "Short Summary", "textarea"],
       ["description", "Full Description", "textarea"]
@@ -58,7 +58,7 @@ export const resourceConfig = {
       ["location", "Location"],
       ["start_date", "Start Date", "date"],
       ["duration", "Duration"],
-      ["image_url", "Training Image URL", "url"],
+      ["image_url", "Training Image", "image"],
       ["description", "Description", "textarea"],
       ["registration_url", "Registration URL", "url"],
       ["status", "Status", "select", ["Upcoming", "Ongoing", "Completed"]],
@@ -79,7 +79,7 @@ export const resourceConfig = {
       ["description", "Description", "textarea"],
       ["deadline", "Deadline", "date"],
       ["location", "Location", "select", ["Remote", "Online", "Monrovia, Liberia", "Liberia", "Nigeria", "Kenya", "Ghana", "South Africa"]],
-      ["image_url", "Image URL", "url"],
+      ["image_url", "Image", "image"],
       ["opportunity_url", "Opportunity URL", "url"],
       ["source_url", "Source URL", "url"],
       ["icon_type", "Icon Type", "select", ["code", "graduation-cap", "briefcase", "globe", "chart"]],
@@ -95,7 +95,7 @@ export const resourceConfig = {
     fields: [
       ["name", "Full Name"],
       ["position", "Position"],
-      ["photo_url", "Photo URL", "url"],
+      ["photo_url", "Photo", "image"],
       ["bio", "Short Bio", "textarea"],
       ["linkedin", "LinkedIn URL", "url"],
       ["twitter", "Twitter / X URL", "url"]
@@ -113,7 +113,7 @@ export const resourceConfig = {
       ["category", "Innovation Area", "select", ["Developer", "Designer", "Entrepreneur", "Creator", "STEM Innovator", "Digital Professional"]],
       ["location", "Location", "select", ["Monrovia, Liberia", "Liberia", "West Africa", "Remote"]],
       ["bio", "Spotlight Bio", "textarea"],
-      ["photo_url", "Photo URL", "url"],
+      ["photo_url", "Photo", "image"],
       ["website", "Website", "url"],
       ["linkedin", "LinkedIn URL", "url"],
       ["featured", "Featured Innovator", "select", ["1", "0"]]
@@ -127,7 +127,7 @@ export const resourceConfig = {
     fields: [
       ["title", "Title"],
       ["category", "Category"],
-      ["image_url", "Image URL", "url"],
+      ["image_url", "Image", "image"],
       ["description", "Description", "textarea"]
     ]
   },
@@ -138,7 +138,7 @@ export const resourceConfig = {
     required: ["name", "description"],
     fields: [
       ["name", "Partner Name"],
-      ["logo_url", "Logo URL", "url"],
+      ["logo_url", "Logo", "image"],
       ["description", "Description", "textarea"],
       ["website", "Website", "url"]
     ]
