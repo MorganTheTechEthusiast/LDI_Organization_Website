@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle2, ChevronRight, Play, Sparkles } from "lucide-react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { endpoints } from "../api.js";
 import { impact, opportunityTypes, pillars } from "../data/site.js";
@@ -17,8 +18,29 @@ export default function Home() {
   const featuredTraining = trainings.find((item) => Number(item.featured) === 1) || trainings[0];
   const leadPost = posts[0];
 
+  useEffect(() => {
+    const sections = document.querySelectorAll(".home-motion-root > section");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduceMotion) {
+      sections.forEach((section) => section.classList.add("is-visible"));
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver((entries, currentObserver) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        currentObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.14, rootMargin: "0px 0px -8%" });
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <>
+    <div className="home-motion-root">
       <section className="hero-section">
         <div className="hero-grid container-tight">
           <div className="hero-copy">
@@ -48,7 +70,7 @@ export default function Home() {
       <section className="section-pad bg-ink text-white"><div className="container-tight section-intro-row"><SectionHeader light eyebrow="Insights / news" title="Stories for a digital Liberia." text="Read the ideas, people, and progress shaping technology and opportunity across our ecosystem." /><Link to="/news" className="text-link section-intro-link light-link">Read all insights <ArrowRight className="h-4 w-4" /></Link></div>{leadPost ? <div className="container-tight grid gap-6 lg:grid-cols-[1.15fr_0.85fr]"><article className="lead-story"><CardImage src={leadPost.image_url} alt={leadPost.title} className="h-full min-h-80" /><div><p className="eyebrow">{leadPost.category}</p><h3>{leadPost.title}</h3><p>{leadPost.summary}</p><Link to={"/news/" + leadPost.slug} className="text-link light-link">Read story <ArrowRight className="h-4 w-4" /></Link></div></article><div className="grid gap-5 md:grid-cols-2 lg:grid-cols-1">{posts.slice(1, 3).map((post) => <BlogCard key={post.id} post={post} />)}</div></div> : <EmptyState dark text="Fresh insights are on the way." href="/contact" action="Talk to our team" />}</section>
 
       <section className="cta-band"><div className="container-tight cta-inner"><div><p className="eyebrow">Join the movement</p><h2>Be Part of Liberia's Digital Future.</h2><p>Whether you are a student, educator, creator, organization, company, or technology enthusiast, there is a place for you in the LDI community.</p></div><div className="hero-actions"><Link to="/contact" className="btn-crimson">Get Involved <ArrowRight className="h-4 w-4" /></Link><Link to="/opportunities" className="btn-outline-orange">Explore Opportunities</Link></div></div></section>
-    </>
+    </div>
   );
 }
 
