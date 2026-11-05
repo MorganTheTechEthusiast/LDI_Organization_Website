@@ -57,12 +57,19 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .brand-dark-surface::after,.section-pad.bg-ink::after { position: absolute; right: -100px; bottom: -160px; z-index: -1; width: 420px; height: 420px; content: ""; border: 1px solid rgba(255,189,116,.22); border-radius: 50%; box-shadow: 0 0 0 32px rgba(255,189,116,.04),0 0 0 64px rgba(255,189,116,.035); pointer-events: none; }
 .brand-dark-surface > *,.section-pad.bg-ink > * { position: relative; z-index: 1; }
 .site-header { background: rgba(248,249,250,.94); border-bottom: 1px solid rgba(107,15,26,.1); backdrop-filter: blur(18px); }
-.nav-link { color: #6b0f1a; position: relative; padding: 25px 0; }
+.site-header > nav { gap: 20px; }
+.site-header > nav > div.hidden { min-width: 0; flex: 1; justify-content: flex-end; gap: 22px; }
+.site-header > nav > div.hidden .nav-link { display: inline-flex; align-items: center; white-space: nowrap; }
+.site-header > nav > div.hidden .btn-crimson { flex-shrink: 0; white-space: nowrap; }
+.site-header > nav > div.hidden .nav-link { font-size: 13px; }
+.nav-link { color: #6b0f1a; position: relative; padding: 25px 0; line-height: 1.2; }
 .nav-link::after { content: ""; position: absolute; left: 0; right: 100%; bottom: 17px; height: 2px; background: #e05a2b; transition: right .25s ease; }
 .nav-link:hover::after,.nav-link.is-active::after { right: 0; }
 .nav-link:hover,.nav-link.is-active { color: #e05a2b; }
 .mobile-menu-button { color: #6b0f1a; border: 1px solid rgba(107,15,26,.15); border-radius: 4px; padding: 8px; }
 .mobile-nav { background: #f8f9fa; }
+.mobile-nav .nav-link { white-space: normal; }
+@media (min-width: 901px) and (max-width: 1200px) { .site-header > nav { gap: 14px; } .site-header > nav > div.hidden { gap: 14px; } .site-header > nav > div.hidden .nav-link { font-size: 12px; } .site-header > nav > div.hidden .btn-crimson { padding-inline: 14px; } }
 .theme-toggle { border-color: rgba(107,15,26,.18); color: #6b0f1a; background: white; }
 .theme-toggle:hover { background: #6b0f1a; color: white; border-color: #6b0f1a; }
 .btn-crimson,.btn-outline-orange,.btn-primary,.btn-dark,.btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 4px; padding: 13px 20px; font-family: inherit; font-size: 13px; font-weight: 800; transition: transform .2s ease, background .2s ease, border-color .2s ease, color .2s ease; }
