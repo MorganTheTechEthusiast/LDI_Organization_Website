@@ -3,10 +3,13 @@ import Layout from "./components/Layout.jsx";
 import AdminLayout from "./components/admin/AdminLayout.jsx";
 import About from "./pages/About.jsx";
 import AdminResource from "./pages/admin/AdminResource.jsx";
+import TrainingApplications from "./pages/admin/TrainingApplications.jsx";
+import TrainingProgramSettings from "./pages/admin/TrainingProgramSettings.jsx";
 import Contact from "./pages/Contact.jsx";
 import GetInvolved from "./pages/GetInvolved.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import Gallery from "./pages/Gallery.jsx";
+import GirlsInTech from "./pages/GirlsInTech.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/admin/Login.jsx";
 import News from "./pages/News.jsx";
@@ -39,6 +42,7 @@ export default function App() {
         <Route path="/video" element={<Videos />} />
         <Route path="/video/:slug" element={<VideoDetail />} />
         <Route path="/training" element={<Training />} />
+        <Route path="/training/girls-in-tech-cohort-2" element={<GirlsInTech />} />
         <Route path="/training/:slug" element={<TrainingDetail />} />
         <Route path="/opportunities" element={<Opportunities />} />
         <Route path="/news" element={<News />} />
@@ -70,6 +74,8 @@ export default function App() {
         <Route path="gallery" element={<AdminResource type="gallery" />} />
         <Route path="partners" element={<AdminResource type="partners" />} />
         <Route path="messages" element={<AdminResource type="messages" />} />
+        <Route path="training-applications" element={<TrainingApplications />} />
+        <Route path="training-program" element={<TrainingProgramSettings />} />
       </Route>
     </Routes>
   );

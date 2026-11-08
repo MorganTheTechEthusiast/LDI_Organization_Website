@@ -7,6 +7,7 @@ import { authRouter } from "./routes/auth.js";
 import { contactRouter } from "./routes/contact.js";
 import { crudRouter } from "./routes/crud.js";
 import { uploadsRouter } from "./routes/uploads.js";
+import { trainingRouter } from "./routes/training.js";
 
 dotenv.config();
 
@@ -67,6 +68,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api", crudRouter);
 app.use("/api/uploads", uploadsRouter);
+app.use("/api", trainingRouter);
 app.use("/api", contactRouter);
 
 app.use((err, _req, res, _next) => {
@@ -75,6 +77,18 @@ app.use((err, _req, res, _next) => {
     return res.status(409).json({
       message:
         "That record conflicts with existing content. Please change the title or slug and try again.",
+    });
+  }
+  if (err.code === "23505") {
+    return res.status(409).json({
+      message:
+        "This application conflicts with an existing record. Check whether this email has already been used for Cohort #2.",
+    });
+  }
+  if (err.code === "42P01" || err.code === "42703") {
+    return res.status(503).json({
+      message:
+        "The training database schema is not ready. Restart or redeploy the backend so the Cohort #2 tables can be created.",
     });
   }
   return res

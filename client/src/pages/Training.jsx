@@ -1,4 +1,5 @@
-import { GraduationCap } from "lucide-react";
+import { ArrowRight, GraduationCap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { endpoints } from "../api.js";
 import SectionHeader from "../components/SectionHeader.jsx";
 import TrainingCard from "../components/TrainingCard.jsx";
@@ -19,6 +20,7 @@ export default function Training() {
             <p className="mt-6 max-w-2xl text-xl leading-9 text-white/72">
               Practical courses and awareness programs helping Liberians build confidence, skills, and opportunity in the digital economy.
             </p>
+            <Link to="/training/girls-in-tech-cohort-2" className="btn-primary mt-7">Girls in Tech Cohort #2 <ArrowRight className="h-4 w-4" /></Link>
           </div>
           <div className="rounded-sm border border-white/10 bg-white/10 p-7">
             <GraduationCap className="mb-5 h-10 w-10 text-ember" />

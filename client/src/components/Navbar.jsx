@@ -8,6 +8,7 @@ const links = [
   ["About Us", "/about"],
   ["Programs & Impact", "/programs"],
   ["Digital Opportunities", "/opportunities"],
+  ["Training", "/training"],
   ["Youth Innovation", "/youth-innovation"],
   ["Team", "/team"],
   ["Gallery", "/gallery"],

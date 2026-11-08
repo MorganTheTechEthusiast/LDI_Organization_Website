@@ -279,4 +279,161 @@ export async function initDb() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS training_programs (
+      id ${idColumn},
+      slug TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      cohort_number TEXT NOT NULL,
+      tagline TEXT NOT NULL,
+      overview TEXT NOT NULL,
+      about_ldi TEXT NOT NULL,
+      learn_items TEXT NOT NULL,
+      duration TEXT NOT NULL,
+      schedule TEXT NOT NULL,
+      eligibility TEXT NOT NULL,
+      fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+      currency TEXT NOT NULL DEFAULT 'USD',
+      deadline TEXT,
+      payment_instructions TEXT,
+      faq_items TEXT,
+      image_url TEXT,
+      status TEXT NOT NULL DEFAULT 'Open',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS training_applications (
+      id ${idColumn},
+      program_id INTEGER NOT NULL,
+      application_reference TEXT UNIQUE,
+      full_name TEXT NOT NULL,
+      date_of_birth TEXT,
+      gender TEXT,
+      phone TEXT NOT NULL,
+      whatsapp TEXT,
+      email TEXT NOT NULL,
+      residential_address TEXT,
+      county TEXT,
+      city_community TEXT,
+      educational_status TEXT,
+      institution TEXT,
+      highest_qualification TEXT,
+      occupation TEXT,
+      computer_experience TEXT,
+      previous_training TEXT,
+      current_skills TEXT,
+      has_computer TEXT,
+      has_smartphone TEXT,
+      interest_reason TEXT,
+      expected_outcome TEXT,
+      motivation_statement TEXT,
+      relevant_experience TEXT,
+      learned_from TEXT,
+      emergency_name TEXT,
+      emergency_phone TEXT,
+      declaration_accepted INTEGER NOT NULL DEFAULT 0,
+      terms_accepted INTEGER NOT NULL DEFAULT 0,
+      privacy_consent INTEGER NOT NULL DEFAULT 0,
+      photo_url TEXT,
+      supporting_document_url TEXT,
+      status TEXT NOT NULL DEFAULT 'Submitted',
+      payment_status TEXT NOT NULL DEFAULT 'Pending',
+      admin_notes TEXT,
+      submitted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS application_documents (
+      id ${idColumn},
+      application_id INTEGER NOT NULL,
+      document_type TEXT NOT NULL,
+      file_url TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS training_payments (
+      id ${idColumn},
+      application_id INTEGER NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      currency TEXT NOT NULL DEFAULT 'USD',
+      payment_method TEXT NOT NULL,
+      payment_reference TEXT NOT NULL,
+      transaction_id TEXT,
+      evidence_url TEXT,
+      status TEXT NOT NULL DEFAULT 'Pending',
+      reviewed_by INTEGER,
+      reviewed_at TEXT,
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS training_receipts (
+      id ${idColumn},
+      payment_id INTEGER NOT NULL UNIQUE,
+      application_id INTEGER NOT NULL,
+      receipt_number TEXT NOT NULL UNIQUE,
+      issued_by INTEGER,
+      issued_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS training_participants (
+      id ${idColumn},
+      application_id INTEGER NOT NULL UNIQUE,
+      program_id INTEGER NOT NULL,
+      group_name TEXT,
+      registration_status TEXT NOT NULL DEFAULT 'Registered',
+      registered_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id ${idColumn},
+      user_id INTEGER,
+      action TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER,
+      metadata TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await run("CREATE INDEX IF NOT EXISTS idx_training_applications_program ON training_applications (program_id)");
+  await run("CREATE INDEX IF NOT EXISTS idx_training_applications_status ON training_applications (status)");
+  await run("CREATE INDEX IF NOT EXISTS idx_training_payments_status ON training_payments (status)");
+
+  const defaultProgram = {
+    slug: "girls-in-tech-cohort-2",
+    title: "Girls in Tech Digital Skills Training Program",
+    cohort: "Cohort #2",
+    tagline: "Empowering Young Women Through Digital Skills, Technology, and Opportunity.",
+    overview: "A practical, supportive learning experience helping young Liberian women build confidence with technology and prepare for meaningful digital opportunities.",
+    about: "Liberia Digital Insights connects people to trusted technology information, practical learning, and opportunity. This program is part of our commitment to making digital participation more accessible for young women in Liberia.",
+    learn: JSON.stringify(["Digital literacy and online safety", "Productivity tools and professional communication", "Introduction to web, design, and digital creation", "Career readiness, entrepreneurship, and opportunity discovery"]),
+    duration: "6 months",
+    schedule: "Schedule will be shared with accepted applicants.",
+    eligibility: "Young women in Liberia who are motivated to learn, can commit to the training schedule, and have access to a smartphone. No advanced technical background is required.",
+    fee: 0,
+    currency: "USD",
+    deadline: "",
+    payment: "Application and training fees will be communicated by LDI. Do not send money until an authorized LDI administrator confirms the official payment instructions.",
+    faq: JSON.stringify([{ question: "Do I need previous coding experience?", answer: "No. The program is designed for beginners and emerging learners." }, { question: "Will submitting an application guarantee selection?", answer: "No. Applications are reviewed against the published requirements and available cohort capacity." }, { question: "How will I know my application status?", answer: "Use your application reference and email address on the status checker after submitting." }])
+  };
+  await run(`
+    INSERT INTO training_programs (slug, title, cohort_number, tagline, overview, about_ldi, learn_items, duration, schedule, eligibility, fee, currency, deadline, payment_instructions, faq_items, status)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Open'
+    WHERE NOT EXISTS (SELECT 1 FROM training_programs WHERE slug = ?)
+  `, [defaultProgram.slug, defaultProgram.title, defaultProgram.cohort, defaultProgram.tagline, defaultProgram.overview, defaultProgram.about, defaultProgram.learn, defaultProgram.duration, defaultProgram.schedule, defaultProgram.eligibility, defaultProgram.fee, defaultProgram.currency, defaultProgram.deadline, defaultProgram.payment, defaultProgram.faq, defaultProgram.slug]);
 }

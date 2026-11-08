@@ -172,6 +172,10 @@ Public endpoints:
 - `GET /api/gallery`
 - `GET /api/partners`
 - `POST /api/contact`
+- `GET /api/training-programs/girls-in-tech-cohort-2`
+- `POST /api/training-applications`
+- `POST /api/training-applications/status`
+- `POST /api/training-payments`
 - `POST /api/auth/login`
 
 Admin endpoints require a bearer token:
@@ -199,7 +203,22 @@ Admin endpoints require a bearer token:
 - `DELETE /api/partners/:id`
 - `GET /api/contact-messages`
 - `DELETE /api/contact-messages/:id`
+- `GET /api/admin/training-applications`
+- `PUT /api/admin/training-applications/:id`
+- `GET /api/admin/training-payments`
+- `PUT /api/admin/training-payments/:id` (verified payments issue a receipt)
+- `GET /api/admin/training-stats`
+- `GET /api/admin/training-export/:kind` (`complete`, `accepted`, `rejected`, `waitlisted`, `registered`, `verified-payments`, `pending-payments`)
+- `GET /api/admin/training-program`
+- `PUT /api/admin/training-program`
+- `GET /api/training-receipts/:receiptNumber.pdf?email=...`
 
 ## Notes
 
 The app uses image URLs for content management, making it simple to deploy before adding a file upload provider. When SQLite is selected, its database file is created at the configured `SQLITE_PATH`.
+
+## Girls in Tech Cohort #2
+
+The public application page is available at `/training/girls-in-tech-cohort-2`. The first server start creates the cohort-aware tables and seeds an editable Cohort #2 program record. In production, deploy the backend and restart it before using the page so PostgreSQL creates the new tables. Program content is managed from `/admin/training-program`; applications and payment verification are managed from `/admin/training-applications`.
+
+Payment submissions remain `Under Review` until an authenticated administrator verifies them. Only a verified payment can create a receipt, and receipt PDFs are available only when the applicant reference and email match. Configure a provider webhook/API before automating verification; never mark a payment paid from a screenshot or reference alone.
