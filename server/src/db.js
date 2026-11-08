@@ -125,6 +125,18 @@ export async function closeDb() {
 export async function initDb() {
   const idColumn = dbClient === "postgres" ? "SERIAL PRIMARY KEY" : "INTEGER PRIMARY KEY AUTOINCREMENT";
 
+  async function ensureColumns(table, columns) {
+    const existing = dbClient === "postgres"
+      ? await all("SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ?", [table])
+      : await all(`PRAGMA table_info(${table})`);
+    const existingNames = new Set(existing.map((column) => column.column_name || column.name));
+    for (const [name, definition] of Object.entries(columns)) {
+      if (!existingNames.has(name)) {
+        await run(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+      }
+    }
+  }
+
   await run(`
     CREATE TABLE IF NOT EXISTS users (
       id ${idColumn},
@@ -409,6 +421,68 @@ export async function initDb() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Keep databases created by an earlier training release compatible with the
+  // current application without requiring a destructive reset.
+  await ensureColumns("training_programs", {
+    image_url: "TEXT",
+    status: "TEXT DEFAULT 'Open'",
+    created_at: "TEXT",
+    updated_at: "TEXT",
+  });
+  await ensureColumns("training_applications", {
+    application_reference: "TEXT",
+    date_of_birth: "TEXT",
+    gender: "TEXT",
+    whatsapp: "TEXT",
+    residential_address: "TEXT",
+    county: "TEXT",
+    city_community: "TEXT",
+    educational_status: "TEXT",
+    institution: "TEXT",
+    highest_qualification: "TEXT",
+    occupation: "TEXT",
+    computer_experience: "TEXT",
+    previous_training: "TEXT",
+    current_skills: "TEXT",
+    has_computer: "TEXT",
+    has_smartphone: "TEXT",
+    interest_reason: "TEXT",
+    expected_outcome: "TEXT",
+    motivation_statement: "TEXT",
+    relevant_experience: "TEXT",
+    learned_from: "TEXT",
+    emergency_name: "TEXT",
+    emergency_phone: "TEXT",
+    declaration_accepted: "INTEGER DEFAULT 0",
+    terms_accepted: "INTEGER DEFAULT 0",
+    privacy_consent: "INTEGER DEFAULT 0",
+    photo_url: "TEXT",
+    supporting_document_url: "TEXT",
+    status: "TEXT DEFAULT 'Submitted'",
+    payment_status: "TEXT DEFAULT 'Pending'",
+    admin_notes: "TEXT",
+    submitted_at: "TEXT",
+    updated_at: "TEXT",
+  });
+  await ensureColumns("training_payments", {
+    transaction_id: "TEXT",
+    evidence_url: "TEXT",
+    status: "TEXT DEFAULT 'Pending'",
+    reviewed_by: "INTEGER",
+    reviewed_at: "TEXT",
+    notes: "TEXT",
+    created_at: "TEXT",
+  });
+  await ensureColumns("training_receipts", {
+    issued_by: "INTEGER",
+    issued_at: "TEXT",
+  });
+  if (dbClient === "postgres") {
+    await run("CREATE UNIQUE INDEX IF NOT EXISTS idx_training_applications_reference ON training_applications (application_reference) WHERE application_reference IS NOT NULL");
+  } else {
+    await run("CREATE UNIQUE INDEX IF NOT EXISTS idx_training_applications_reference ON training_applications (application_reference)");
+  }
 
   await run("CREATE INDEX IF NOT EXISTS idx_training_applications_program ON training_applications (program_id)");
   await run("CREATE INDEX IF NOT EXISTS idx_training_applications_status ON training_applications (status)");
