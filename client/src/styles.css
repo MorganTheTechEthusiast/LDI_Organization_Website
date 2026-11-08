@@ -217,6 +217,26 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 @media (max-width: 900px) { .admin-kpi-grid { grid-template-columns: repeat(2,1fr); }.admin-analytics-grid { grid-template-columns: 1fr; }.admin-chart-card:last-child { grid-column: auto; }.admin-resource-links { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 560px) { .admin-kpi-grid { grid-template-columns: 1fr 1fr; gap: 9px; }.admin-kpi-top { padding: 14px; }.admin-kpi-bottom { padding: 0 14px; font-size: 8px; }.admin-kpi-value { font-size: 24px; }.admin-kpi-icon { width: 31px; height: 31px; }.admin-chart-header,.admin-bar-chart,.admin-donut-layout { padding-inline: 16px; }.admin-donut-layout { gap: 13px; }.admin-donut { width: 105px; height: 105px; }.admin-donut::before { width: 65px; height: 65px; }.admin-donut span { font-size: 18px; }.admin-chart-footer { padding-inline: 16px; }.admin-focus-list { padding-inline: 16px; }.admin-status-note { margin-inline: 16px; }.admin-resource-strip { padding: 16px; }.admin-resource-links { grid-template-columns: 1fr 1fr; } }
 
+.training-card-link,.training-card { min-width: 0; max-width: 100%; }
+.training-card-media { height: 256px; background: #f4eee7; }
+.training-card-media img { display: block; height: 100%; object-position: center center; }
+.training-card-content { min-width: 0; }
+.training-card-title { overflow-wrap: anywhere; }
+.training-card-meta span { min-width: 0; }.training-card-meta span svg { flex: 0 0 auto; }
+.training-card-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+@media (max-width: 640px) {
+  .training-card-media { height: auto; aspect-ratio: 1.58 / 1; }
+  .training-card-content { padding: 18px; }
+  .training-card-course { font-size: 10px; line-height: 1.45; }
+  .training-card-title { margin-top: 8px; font-size: 1.65rem; line-height: 1.12; }
+  .training-card-meta { margin-top: 13px; gap: 7px; font-size: 12px; line-height: 1.35; }
+  .training-card-description { margin-top: 13px; font-size: 13px; line-height: 1.65; }
+  .training-card-link { margin-top: 15px; font-size: 11px; }
+  .training-card .absolute.left-4 { left: 10px; top: 10px; gap: 5px; }
+  .training-card .absolute.left-4 span { padding: 5px 7px; font-size: 9px; }
+  .training-card .absolute.left-4 svg { width: 12px; height: 12px; }
+}
+
 /* Light navigation rail inspired by modern analytics workspaces. */
 .admin-sidebar { color: #41434b; background: #fff; border-right: 1px solid #e7e8eb; box-shadow: none; }
 .admin-brand { border-bottom-color: #ececef; }.admin-brand-title { color: #6b0f1a; }.admin-brand-subtitle { color: #92949b; }.admin-nav-label { color: #9a5e66; }.admin-nav-link { color: #656871; }.admin-nav-link:hover { color: #6b0f1a; background: #fff6f2; }.admin-nav-link.is-active { color: #6b0f1a; background: #fbe9e1; box-shadow: none; }.admin-nav-link.is-active::before { background: #e05a2b; }.admin-user-chip strong { color: #33343a; }.admin-user-chip small { color: #a0a2a8; }.admin-user-avatar { color: white; background: #6b0f1a; }.admin-sidebar-footer { border-top-color: #ececef; }.admin-logout { color: #73757d; border-color: #e5e6e9; }.admin-logout:hover { color: #6b0f1a; border-color: #e6b5a4; background: #fff6f2; }
