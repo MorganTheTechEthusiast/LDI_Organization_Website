@@ -1,73 +1,69 @@
-import { BarChart3, ClipboardList, Image, LayoutDashboard, LogOut, Newspaper, Users, CalendarDays, Handshake, Mail, Video, GraduationCap, BriefcaseBusiness, Lightbulb } from "lucide-react";
+import { BarChart3, ClipboardList, Image, LayoutDashboard, LogOut, Newspaper, Users, CalendarDays, Handshake, Mail, Video, GraduationCap, BriefcaseBusiness, Lightbulb, Settings2, ExternalLink, Menu, X } from "lucide-react";
+import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import Logo from "../Logo.jsx";
 
-const links = [
-  ["Dashboard", "/admin", LayoutDashboard],
+const contentLinks = [
   ["Posts", "/admin/posts", Newspaper],
   ["Events", "/admin/events", CalendarDays],
   ["Videos", "/admin/videos", Video],
   ["Training", "/admin/trainings", GraduationCap],
-  ["Applications", "/admin/training-applications", ClipboardList],
-  ["Program Settings", "/admin/training-program", GraduationCap],
   ["Opportunities", "/admin/opportunities", BriefcaseBusiness],
+];
+
+const peopleLinks = [
   ["Team", "/admin/team", Users],
   ["Youth Innovation", "/admin/youth-innovators", Lightbulb],
   ["Gallery", "/admin/gallery", Image],
   ["Partners", "/admin/partners", Handshake],
-  ["Messages", "/admin/messages", Mail]
+];
+
+const systemLinks = [
+  ["Messages", "/admin/messages", Mail],
+  ["Applications", "/admin/training-applications", ClipboardList],
+  ["Program Settings", "/admin/training-program", Settings2],
+];
+
+const links = [
+  ["Dashboard", "/admin", LayoutDashboard],
+  ...contentLinks,
+  ...peopleLinks,
+  ...systemLinks,
 ];
 
 export default function AdminLayout() {
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const logout = () => {
     localStorage.removeItem("ldi_token");
     localStorage.removeItem("ldi_user");
     navigate("/admin/login");
   };
 
+  const navSection = (title, items) => <div className="admin-nav-section"><p className="admin-nav-label">{title}</p>{items.map(([label, href, Icon]) => <NavLink onClick={() => setMobileOpen(false)} key={href} to={href} end={href === "/admin"} className={({ isActive }) => `admin-nav-link ${isActive ? "is-active" : ""}`}><Icon className="h-[17px] w-[17px]" /> <span>{label}</span></NavLink>)}</div>;
+
   return (
-    <div className="min-h-screen bg-mist">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 bg-ink p-5 text-white lg:block">
-        <div className="mb-8 flex items-center gap-3">
-          <Logo size="admin" />
-          <div>
-            <p className="font-black">Admin Dashboard</p>
-            <p className="text-xs text-white/50">Content management</p>
-          </div>
-        </div>
-        <nav className="grid gap-2">
-          {links.map(([label, href, Icon]) => (
-            <NavLink key={href} to={href} end={href === "/admin"} className={({ isActive }) => `flex items-center gap-3 rounded-md px-4 py-3 text-sm font-bold ${isActive ? "bg-ember text-ink" : "text-white/70 hover:bg-white/10 hover:text-white"}`}>
-              <Icon className="h-5 w-5" /> {label}
-            </NavLink>
-          ))}
+    <div className="admin-shell">
+      <aside className={`admin-sidebar ${mobileOpen ? "is-open" : ""}`}>
+        <div className="admin-brand"><Logo size="admin" /><div><p className="admin-brand-title">LDI workspace</p><p className="admin-brand-subtitle">Content & impact</p></div></div>
+        <nav className="admin-nav">
+          {navSection("Workspace", [["Dashboard", "/admin", LayoutDashboard]])}
+          {navSection("Publish", contentLinks)}
+          {navSection("Community", peopleLinks)}
+          {navSection("Operations", systemLinks)}
         </nav>
-        <button onClick={logout} className="absolute bottom-5 left-5 right-5 flex items-center justify-center gap-2 rounded-md bg-white/10 px-4 py-3 text-sm font-bold hover:bg-maroon">
-          <LogOut className="h-4 w-4" /> Logout
-        </button>
+        <div className="admin-sidebar-footer"><div className="admin-user-chip"><span className="admin-user-avatar">LDI</span><span><strong>Administrator</strong><small>Signed in</small></span></div><button onClick={logout} className="admin-logout"><LogOut className="h-4 w-4" /> Sign out</button></div>
       </aside>
-      <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 border-b border-black/10 bg-white px-4 py-4 shadow-sm sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="h-6 w-6 text-maroon" />
-              <span className="font-black">Liberia Digital Insights CMS</span>
-            </div>
-            <button onClick={logout} className="rounded-md bg-ink px-4 py-2 text-sm font-bold text-white lg:hidden">Logout</button>
-          </div>
-          <div className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
-            {links.map(([label, href]) => (
-              <NavLink key={href} to={href} end={href === "/admin"} className={({ isActive }) => `shrink-0 rounded-md px-3 py-2 text-xs font-bold ${isActive ? "bg-ember text-ink" : "bg-black/5 text-ink"}`}>
-                {label}
-              </NavLink>
-            ))}
-          </div>
+      {mobileOpen && <button className="admin-overlay lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}
+      <div className="admin-main">
+        <header className="admin-topbar">
+          <div className="flex items-center gap-3"><button className="admin-mobile-toggle lg:hidden" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle navigation">{mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button><div className="admin-topbar-mark"><BarChart3 className="h-5 w-5" /></div><div><p className="admin-topbar-title">Liberia Digital Insights</p><p className="admin-topbar-subtitle">Management workspace</p></div></div>
+          <div className="flex items-center gap-3"><a className="admin-view-site" href="/" target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> <span>View website</span></a><button onClick={logout} className="admin-topbar-user"><span>LDI</span><ChevronDownIcon /></button></div>
         </header>
-        <main className="px-4 py-8 sm:px-6 lg:px-8">
-          <Outlet />
-        </main>
+        <main className="admin-content"><Outlet /></main>
       </div>
     </div>
   );
 }
+
+function ChevronDownIcon() { return <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3.5 w-3.5"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" /></svg>; }
