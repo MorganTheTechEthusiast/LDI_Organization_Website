@@ -252,6 +252,9 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .training-hero-copy { position: relative; z-index: 1; }
 .training-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 30px; }
 .training-hero-link { color: #ffbd74; font-size: 12px; font-weight: 800; }.training-hero-link:hover { color: white; }
+.application-confirmation { position: relative; max-height: min(720px, 92vh); overflow-y: auto; }
+.application-confirmation-close { position: absolute; top: 16px; right: 18px; display: grid; width: 34px; height: 34px; place-items: center; color: #6b0f1a; border-radius: 4px; font-size: 25px; line-height: 1; transition: background .2s ease, color .2s ease; }
+.application-confirmation-close:hover { color: white; background: #6b0f1a; }
 .training-hero-panel { display: grid; grid-template-columns: .9fr 1.1fr; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 7px; background: rgba(20,4,8,.56); box-shadow: 0 25px 60px rgba(30,3,8,.22); backdrop-filter: blur(10px); }
 .training-hero-panel-image { min-height: 330px; background: url('/girls-in-tech-cohort-1.jpg') 18% 22% / cover; }
 .training-hero-panel-copy { padding: 28px; }

@@ -39,6 +39,7 @@ export default function GirlsInTech() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [error, setError] = useState("");
   const [statusForm, setStatusForm] = useState({ application_reference: "", email: "" });
   const [status, setStatus] = useState(null);
@@ -60,8 +61,8 @@ export default function GirlsInTech() {
     try {
       const { data: response } = await api.post("/training-applications", form);
       setResult(response);
+      setShowConfirmation(true);
       setShowApplication(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (requestError) {
       setError(requestError.response?.data?.message || "We could not submit your application. Please try again.");
     }
@@ -101,7 +102,7 @@ export default function GirlsInTech() {
         </div>
       </section>
 
-      {result && <section className="section-pad bg-paper"><div className="container-tight max-w-3xl"><div className="rounded-sm border border-green-200 bg-green-50 p-8"><CheckCircle2 className="h-10 w-10 text-green-700" /><p className="eyebrow mt-5 text-green-800">Application received</p><h2 className="mt-2 text-3xl font-black text-ink">Thank you, {form.full_name}.</h2><p className="mt-3 leading-7 text-black/65">Keep this reference number safe. You will need it to check your application status.</p><div className="mt-5 rounded-sm bg-white p-5 font-heading text-xl font-black text-maroon">{result.application_reference}</div><button type="button" className="btn-crimson mt-6" onClick={() => { setStatusForm({ application_reference: result.application_reference, email: form.email }); document.getElementById("status")?.scrollIntoView({ behavior: "smooth" }); }}>Track application</button></div></div></section>}
+      {result && showConfirmation && <ApplicationConfirmation applicant={form.full_name} email={form.email} reference={result.application_reference} close={() => setShowConfirmation(false)} track={() => { setStatusForm({ application_reference: result.application_reference, email: form.email }); setShowConfirmation(false); document.getElementById("status")?.scrollIntoView({ behavior: "smooth" }); }} />}
 
       <section className="section-pad bg-paper"><SectionHeader eyebrow="About the program" title="Skills that open the next door." text={program.about_ldi} /><div className="container-tight grid gap-6 md:grid-cols-2"><article className="card p-7"><p className="eyebrow">What you will learn</p><div className="mt-5 grid gap-4">{learnItems.map((item) => <p className="flex gap-3 text-[15px] leading-7 text-black/70" key={item}><CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-ember" />{item}</p>)}</div></article><article className="card p-7"><p className="eyebrow">Program details</p><div className="mt-5 grid gap-4 text-[15px] leading-7 text-black/70"><p><strong className="text-ink">Duration:</strong> {program.duration}</p><p><strong className="text-ink">Schedule:</strong> {program.schedule}</p><p><strong className="text-ink">Eligibility:</strong> {program.eligibility}</p><p><strong className="text-ink">Fee:</strong> {Number(program.fee) ? `${program.currency} ${program.fee}` : "See official payment instructions"}</p></div></article></div></section>
 
@@ -131,4 +132,22 @@ function ApplicationModal({ form, setForm, step, setStep, error, submitApplicati
   ][step];
 
   return <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 p-3 sm:p-4"><form onSubmit={step === 4 ? submitApplication : nextStep} className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-5 shadow-soft sm:p-7"><div className="flex items-start justify-between gap-5"><div><p className="eyebrow">Girls in Tech • Cohort #2</p><h2 className="mt-2 text-2xl font-black text-ink">Application form</h2></div><button type="button" className="grid h-9 w-9 place-items-center rounded-md bg-black/5 text-ink" onClick={close} aria-label="Close application">×</button></div><div className="mt-5 grid grid-cols-5 gap-2">{steps.map((label, index) => <button type="button" key={label} onClick={() => index <= step && setStep(index)} className={`border-t-4 pt-2 text-left text-xs font-black ${index <= step ? "border-maroon text-maroon" : "border-black/10 text-black/35"}`}>{index + 1}. {label}</button>)}</div><div className="mt-5">{content}</div>{error && <p className="mt-4 rounded-md bg-red-50 p-3 text-sm font-semibold text-maroon">{error}</p>}<div className="mt-5 flex flex-wrap justify-between gap-3"><button type="button" className="rounded-md bg-black/5 px-5 py-3 text-sm font-bold text-ink" onClick={() => step ? setStep(step - 1) : close()}>{step ? "Back" : "Cancel"}</button>{step < 4 ? <button className="btn-crimson" type="submit">Continue <ArrowRight className="h-4 w-4" /></button> : <button className="btn-primary" type="submit">Submit application <CheckCircle2 className="h-4 w-4" /></button>}</div></form></div>;
+}
+
+function ApplicationConfirmation({ applicant, email, reference, close, track }) {
+  return <div className="fixed inset-0 z-[70] grid place-items-center bg-black/65 p-4" role="dialog" aria-modal="true" aria-labelledby="application-confirmation-title">
+    <div className="application-confirmation w-full max-w-3xl rounded-sm border border-green-200 bg-green-50 p-6 shadow-soft sm:p-10">
+      <button type="button" className="application-confirmation-close" onClick={close} aria-label="Close confirmation">Ã—</button>
+      <CheckCircle2 className="h-12 w-12 text-green-700" />
+      <p className="eyebrow mt-5 text-green-800">Application received</p>
+      <h2 id="application-confirmation-title" className="mt-2 text-3xl font-black text-ink sm:text-4xl">Thank you, {applicant}.</h2>
+      <p className="mt-3 leading-7 text-black/65">Keep this reference number safe. You will need it to check your application status.</p>
+      <div className="mt-5 rounded-sm bg-white p-5 font-heading text-xl font-black text-maroon sm:text-2xl">{reference}</div>
+      <p className="mt-4 text-sm leading-6 text-black/65">We have sent a confirmation email to <strong className="text-ink">{email}</strong> with your application details and payment instructions. Please check your inbox and spam folder.</p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button type="button" className="btn-crimson" onClick={track}>Track application <ArrowRight className="h-4 w-4" /></button>
+        <button type="button" className="rounded-md bg-black/5 px-5 py-3 text-sm font-bold text-ink" onClick={close}>Continue browsing</button>
+      </div>
+    </div>
+  </div>;
 }
