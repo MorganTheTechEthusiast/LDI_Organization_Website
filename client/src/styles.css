@@ -78,6 +78,7 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .dark .contact-form-panel { border-color: rgba(255,255,255,.1); background: #1e222a; box-shadow: 0 12px 30px rgba(0,0,0,.16); }
 .site-header > nav { gap: 20px; }
 .site-header > nav > div.hidden { min-width: 0; flex: 1; justify-content: flex-end; gap: 22px; }
+.site-header > nav > div.hidden { margin-left: 22px; gap: 28px; }
 .site-header > nav > div.hidden .nav-link { display: inline-flex; align-items: center; white-space: nowrap; }
 .site-header > nav > div.hidden .btn-crimson { flex-shrink: 0; white-space: nowrap; }
 .site-header > nav > div.hidden .nav-link { font-size: 13px; }
@@ -244,6 +245,7 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
   .training-card .absolute.left-4 span { padding: 5px 7px; font-size: 9px; }
   .training-card .absolute.left-4 svg { width: 12px; height: 12px; }
 }
+.training-hero-kicker { color: #ffcf70; font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .training-program-hero { background-image: linear-gradient(90deg,rgba(42,5,12,.94) 0%,rgba(107,15,26,.86) 47%,rgba(107,15,26,.36) 100%),url('/girls-in-tech-graduates.jpg'); background-position: center, center 43%; background-size: cover, cover; }
 .training-program-hero::before { opacity: .16; }
 .training-hero-copy { position: relative; z-index: 1; }
@@ -265,7 +267,7 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .admin-sidebar { color: #41434b; background: #fff; border-right: 1px solid #e7e8eb; box-shadow: none; }
 .admin-brand { border-bottom-color: #ececef; }.admin-brand-title { color: #6b0f1a; }.admin-brand-subtitle { color: #92949b; }.admin-nav-label { color: #9a5e66; }.admin-nav-link { color: #656871; }.admin-nav-link:hover { color: #6b0f1a; background: #fff6f2; }.admin-nav-link.is-active { color: #6b0f1a; background: #fbe9e1; box-shadow: none; }.admin-nav-link.is-active::before { background: #e05a2b; }.admin-user-chip strong { color: #33343a; }.admin-user-chip small { color: #a0a2a8; }.admin-user-avatar { color: white; background: #6b0f1a; }.admin-sidebar-footer { border-top-color: #ececef; }.admin-logout { color: #73757d; border-color: #e5e6e9; }.admin-logout:hover { color: #6b0f1a; border-color: #e6b5a4; background: #fff6f2; }
 .admin-topbar { color: white; border-bottom: 0; background: linear-gradient(105deg,#6b0f1a 0%,#821626 64%,#a93527 100%); box-shadow: 0 5px 16px rgba(107,15,26,.18); }.admin-topbar-mark { color: white; border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.12); }.admin-topbar-title { color: white; }.admin-topbar-subtitle { color: rgba(255,255,255,.6); }.admin-view-site { color: rgba(255,255,255,.82); }.admin-view-site:hover { color: #ffbd74; }.admin-topbar-user { color: white; border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.1); }.admin-topbar-user > span { color: #6b0f1a; background: #ffbd74; }.admin-mobile-toggle { color: white; border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.1); }
-@media (min-width: 901px) and (max-width: 1200px) { .site-header > nav { gap: 14px; } .site-header > nav > div.hidden { gap: 14px; } .site-header > nav > div.hidden .nav-link { font-size: 12px; } .site-header > nav > div.hidden .btn-crimson { padding-inline: 14px; } }
+@media (min-width: 901px) and (max-width: 1200px) { .site-header > nav { gap: 14px; } .site-header > nav > div.hidden { margin-left: 8px; gap: 14px; } .site-header > nav > div.hidden .nav-link { font-size: 12px; } .site-header > nav > div.hidden .btn-crimson { padding-inline: 14px; } }
 .theme-toggle { border-color: rgba(107,15,26,.18); color: #6b0f1a; background: white; }
 .theme-toggle:hover { background: #6b0f1a; color: white; border-color: #6b0f1a; }
 .btn-crimson,.btn-outline-orange,.btn-primary,.btn-dark,.btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 4px; padding: 13px 20px; font-family: inherit; font-size: 13px; font-weight: 800; transition: transform .2s ease, background .2s ease, border-color .2s ease, color .2s ease; }
