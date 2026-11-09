@@ -39,3 +39,22 @@ uploadsRouter.post("/images", requireAuth, upload.single("image"), async (req, r
     return next(error);
   }
 });
+
+uploadsRouter.post("/payment-proof", upload.single("proof"), async (req, res, next) => {
+  try {
+    if (!cloudName || !apiKey || !apiSecret) {
+      return res.status(503).json({ message: "Payment proof storage is not configured on the backend." });
+    }
+    if (!req.file) return res.status(400).json({ message: "Please select a payment screenshot." });
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "ldi/payment-proofs", resource_type: "image", type: "authenticated", use_filename: false, unique_filename: true },
+        (error, uploaded) => error ? reject(error) : resolve(uploaded)
+      );
+      stream.end(req.file.buffer);
+    });
+    return res.status(201).json({ url: cloudinary.url(result.public_id, { secure: true, type: "authenticated", sign_url: true, resource_type: "image" }), public_id: result.public_id });
+  } catch (error) {
+    return next(error);
+  }
+});

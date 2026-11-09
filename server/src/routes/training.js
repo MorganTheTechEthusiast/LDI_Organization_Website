@@ -3,12 +3,13 @@ import PDFDocument from "pdfkit";
 import XLSX from "xlsx";
 import { all, get, run } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { applicationReceivedEmail, sendEmail, statusChangeEmail } from "../services/email.js";
 
 export const trainingRouter = express.Router();
 
 const PROGRAM_SLUG = "girls-in-tech-cohort-2";
-const applicationStatuses = ["Submitted", "Under Review", "Accepted", "Waitlisted", "Not Selected", "Payment Pending", "Registration Completed"];
-const paymentStatuses = ["Pending", "Under Review", "Verified/Paid", "Rejected", "Refunded"];
+const applicationStatuses = ["Submitted", "Awaiting Payment", "Payment Submitted", "Payment Verified", "Under Review", "Approved", "Rejected", "Payment Rejected", "Registration Completed"];
+const paymentStatuses = ["Pending", "Payment Submitted", "Payment Verified", "Payment Rejected", "Refunded"];
 const publicRequestLog = new Map();
 
 function publicRateLimit(req, res, next) {
@@ -47,6 +48,13 @@ function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+async function notifyStatus(applicationId, status, message = "") {
+  const application = await get("SELECT a.application_reference, a.full_name, a.email, p.title, p.cohort_number FROM training_applications a JOIN training_programs p ON p.id = a.program_id WHERE a.id = ?", [applicationId]);
+  if (!application?.email || !application.application_reference) return;
+  const email = statusChangeEmail({ applicant: application.full_name, reference: application.application_reference, program: application, status, message });
+  await sendEmail({ to: application.email, ...email });
+}
+
 trainingRouter.get("/training-programs/girls-in-tech-cohort-2", async (_req, res, next) => {
   try {
     const program = await getProgram();
@@ -73,12 +81,16 @@ trainingRouter.post("/training-applications", publicRateLimit, async (req, res, 
     const fields = ["program_id", "full_name", "date_of_birth", "gender", "phone", "whatsapp", "email", "residential_address", "county", "city_community", "educational_status", "institution", "highest_qualification", "occupation", "computer_experience", "previous_training", "current_skills", "has_computer", "has_smartphone", "interest_reason", "expected_outcome", "motivation_statement", "relevant_experience", "learned_from", "emergency_name", "emergency_phone", "declaration_accepted", "terms_accepted", "privacy_consent", "photo_url", "supporting_document_url"];
     const values = [program.id, ...fields.slice(1).map((field) => ["declaration_accepted", "terms_accepted", "privacy_consent"].includes(field) ? (body[field] ? 1 : 0) : text(body[field]))];
     const placeholders = fields.map(() => "?").join(", ");
-    const result = await run(`INSERT INTO training_applications (${fields.join(", ")}) VALUES (${placeholders})`, values);
+    fields.push("status");
+    values.push("Awaiting Payment");
+    const result = await run(`INSERT INTO training_applications (${fields.join(", ")}) VALUES (${placeholders}, ?)`, values);
     const year = new Date().getFullYear();
     const reference = `LDI-GIT-C2-${year}-${String(result.id).padStart(4, "0")}`;
     await run("UPDATE training_applications SET application_reference = ? WHERE id = ?", [reference, result.id]);
     await writeAudit(null, "application_submitted", "training_application", result.id, { reference });
-    return res.status(201).json({ application_reference: reference, status: "Submitted", message: "Your application was submitted successfully." });
+    const email = applicationReceivedEmail({ applicant: text(body.full_name), reference, program, amount: program.fee, paymentInstructions: program.payment_instructions });
+    await sendEmail({ to: text(body.email), ...email }).catch((error) => console.error("Application confirmation email failed.", error));
+    return res.status(201).json({ application_reference: reference, status: "Awaiting Payment", message: "Your application was submitted successfully. A confirmation email has been sent if email delivery is configured." });
   } catch (error) { return next(error); }
 });
 
@@ -91,7 +103,7 @@ trainingRouter.post("/training-applications/status", publicRateLimit, async (req
       FROM training_applications a JOIN training_programs p ON p.id = a.program_id
       WHERE a.application_reference = ? AND lower(a.email) = lower(?)`, [reference, email]);
     if (!application) return res.status(404).json({ message: "We could not find an application with those details." });
-    const payment = await get("SELECT pay.status, pay.amount, pay.currency, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_payments pay LEFT JOIN training_receipts r ON r.payment_id = pay.id WHERE pay.application_id = ? ORDER BY pay.id DESC LIMIT 1", [await getApplicationId(reference)]);
+    const payment = await get("SELECT pay.status, pay.amount, pay.currency, pay.payment_method, pay.payment_reference, pay.transaction_id, pay.evidence_url, r.receipt_number FROM training_payments pay LEFT JOIN training_receipts r ON r.payment_id = pay.id WHERE pay.application_id = ? ORDER BY pay.id DESC LIMIT 1", [await getApplicationId(reference)]);
     return res.json({ ...application, payment: payment || null });
   } catch (error) { return next(error); }
 });
@@ -106,7 +118,7 @@ async function getReceipt(receiptNumber, email = null) {
   const params = email ? [receiptNumber, email] : [receiptNumber];
   return get(`SELECT r.*, a.application_reference, a.full_name, a.email, p.title, p.cohort_number, pay.amount, pay.currency, pay.payment_method, pay.payment_reference, pay.transaction_id, pay.created_at AS payment_date
     FROM training_receipts r JOIN training_applications a ON a.id = r.application_id JOIN training_programs p ON p.id = a.program_id JOIN training_payments pay ON pay.id = r.payment_id
-    WHERE r.receipt_number = ?${emailClause} AND pay.status = 'Verified/Paid'`, params);
+    WHERE r.receipt_number = ?${emailClause} AND pay.status = 'Payment Verified'`, params);
 }
 
 trainingRouter.post("/training-payments", publicRateLimit, async (req, res, next) => {
@@ -115,16 +127,19 @@ trainingRouter.post("/training-payments", publicRateLimit, async (req, res, next
     const email = text(req.body?.email);
     const method = text(req.body?.payment_method);
     const paymentReference = text(req.body?.payment_reference);
+    const transactionId = text(req.body?.transaction_id);
+    const evidenceUrl = text(req.body?.evidence_url);
     const amount = Number(req.body?.amount);
-    if (!reference || !email || !method || !paymentReference || !Number.isFinite(amount) || amount <= 0) return res.status(400).json({ message: "Application, email, payment method, amount, and payment reference are required." });
+    if (!reference || !email || !method || !Number.isFinite(amount) || amount <= 0 || (!paymentReference && !transactionId && !evidenceUrl)) return res.status(400).json({ message: "Application, email, payment method, amount, and a transaction ID or payment proof are required." });
     const application = await get("SELECT * FROM training_applications WHERE application_reference = ? AND lower(email) = lower(?)", [reference, email]);
     if (!application) return res.status(404).json({ message: "Application not found." });
-    const existing = await get("SELECT id FROM training_payments WHERE application_id = ? AND payment_reference = ?", [application.id, paymentReference]);
+    const existing = await get("SELECT id FROM training_payments WHERE application_id = ? AND (payment_reference = ? OR transaction_id = ?)", [application.id, paymentReference || transactionId, transactionId || paymentReference]);
     if (existing) return res.status(409).json({ message: "This payment reference has already been submitted." });
-    const result = await run("INSERT INTO training_payments (application_id, amount, currency, payment_method, payment_reference, transaction_id, evidence_url, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, 'Under Review', ?)", [application.id, amount, text(req.body?.currency) || "USD", method, paymentReference, text(req.body?.transaction_id), text(req.body?.evidence_url), text(req.body?.notes)]);
-    await run("UPDATE training_applications SET payment_status = 'Under Review', status = CASE WHEN status = 'Accepted' THEN status ELSE 'Payment Pending' END, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [application.id]);
+    const result = await run("INSERT INTO training_payments (application_id, amount, currency, payment_method, payment_reference, transaction_id, evidence_url, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, 'Payment Submitted', ?)", [application.id, amount, text(req.body?.currency) || "USD", method, paymentReference || transactionId, transactionId, evidenceUrl, text(req.body?.notes)]);
+    await run("UPDATE training_applications SET payment_status = 'Payment Submitted', status = 'Payment Submitted', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [application.id]);
     await writeAudit(null, "payment_submitted", "training_payment", result.id, { reference });
-    return res.status(201).json({ status: "Under Review", message: "Payment submitted for administrator verification." });
+    await notifyStatus(application.id, "Payment Submitted", "Your payment proof has been received and is waiting for manual LDI verification.").catch((error) => console.error("Payment submission email failed.", error));
+    return res.status(201).json({ status: "Payment Submitted", message: "Payment submitted for administrator verification." });
   } catch (error) { return next(error); }
 });
 
@@ -156,6 +171,7 @@ trainingRouter.put("/admin/training-applications/:id", requireAuth, async (req, 
     if (status && !applicationStatuses.includes(status)) return res.status(400).json({ message: "Invalid application status." });
     await run("UPDATE training_applications SET status = COALESCE(?, status), admin_notes = COALESCE(?, admin_notes), updated_at = CURRENT_TIMESTAMP WHERE id = ?", [status || null, req.body?.admin_notes ?? null, req.params.id]);
     await writeAudit(req.user.id, "application_updated", "training_application", req.params.id, { status });
+    if (status) await notifyStatus(req.params.id, status, text(req.body?.notification_message)).catch((error) => console.error("Application status email failed.", error));
     return res.json(await get("SELECT * FROM training_applications WHERE id = ?", [req.params.id]));
   } catch (error) { return next(error); }
 });
@@ -174,17 +190,18 @@ trainingRouter.put("/admin/training-payments/:id", requireAuth, async (req, res,
     if (!payment) return res.status(404).json({ message: "Payment not found." });
     await run("UPDATE training_payments SET status = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, notes = ? WHERE id = ?", [status, req.user.id, text(req.body?.notes), req.params.id]);
     let receipt = null;
-    if (status === "Verified/Paid") {
+    if (status === "Payment Verified") {
       const existing = await get("SELECT * FROM training_receipts WHERE payment_id = ?", [payment.id]);
       if (!existing) {
         const created = await run("INSERT INTO training_receipts (payment_id, application_id, receipt_number, issued_by) VALUES (?, ?, ?, ?)", [payment.id, payment.application_id, `LDI-REC-${new Date().getFullYear()}-${String(payment.id).padStart(4, "0")}`, req.user.id]);
         receipt = await get("SELECT * FROM training_receipts WHERE id = ?", [created.id]);
       } else receipt = existing;
-      await run("UPDATE training_applications SET payment_status = 'Verified/Paid', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [payment.application_id]);
-    } else if (["Rejected", "Refunded"].includes(status)) {
-      await run("UPDATE training_applications SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [status, payment.application_id]);
+      await run("UPDATE training_applications SET payment_status = 'Payment Verified', status = 'Payment Verified', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [payment.application_id]);
+    } else if (["Payment Rejected", "Refunded"].includes(status)) {
+      await run("UPDATE training_applications SET payment_status = ?, status = CASE WHEN ? = 'Payment Rejected' THEN 'Payment Rejected' ELSE status END, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [status, status, payment.application_id]);
     }
     await writeAudit(req.user.id, `payment_${status.toLowerCase().replaceAll("/", "_")}`, "training_payment", payment.id, { receipt: receipt?.receipt_number });
+    await notifyStatus(payment.application_id, status, text(req.body?.notes)).catch((error) => console.error("Payment status email failed.", error));
     return res.json({ payment: await get("SELECT * FROM training_payments WHERE id = ?", [payment.id]), receipt });
   } catch (error) { return next(error); }
 });
@@ -193,7 +210,7 @@ trainingRouter.post("/admin/training-participants", requireAuth, async (req, res
   try {
     const application = await get("SELECT * FROM training_applications WHERE id = ?", [req.body?.application_id]);
     if (!application) return res.status(404).json({ message: "Application not found." });
-    if (application.status !== "Accepted" || application.payment_status !== "Verified/Paid") return res.status(400).json({ message: "Only accepted applicants with verified payment can be registered." });
+    if (application.status !== "Approved" || application.payment_status !== "Payment Verified") return res.status(400).json({ message: "Only approved applicants with verified payment can be registered." });
     await run("INSERT INTO training_participants (application_id, program_id, group_name) VALUES (?, ?, ?)", [application.id, application.program_id, text(req.body?.group_name)]);
     await run("UPDATE training_applications SET status = 'Registration Completed', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [application.id]);
     await writeAudit(req.user.id, "participant_registered", "training_application", application.id, { group_name: text(req.body?.group_name) });
@@ -283,13 +300,14 @@ trainingRouter.get("/admin/training-export/:kind", requireAuth, async (req, res,
     const kind = text(req.params.kind);
     let rows;
     if (kind === "verified-payments" || kind === "pending-payments") {
-      const status = kind === "verified-payments" ? "Verified/Paid" : "Under Review";
+      const status = kind === "verified-payments" ? "Payment Verified" : "Payment Submitted";
       rows = await all(`SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_applications a JOIN training_payments pay ON pay.application_id = a.id LEFT JOIN training_receipts r ON r.payment_id = pay.id WHERE pay.status = ? ORDER BY pay.created_at DESC`, [status]);
     } else if (kind === "registered") {
-      rows = await all("SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number, part.group_name, part.registered_at FROM training_applications a JOIN training_participants part ON part.application_id = a.id LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Verified/Paid' LEFT JOIN training_receipts r ON r.payment_id = pay.id ORDER BY part.registered_at DESC");
+      rows = await all("SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number, part.group_name, part.registered_at FROM training_applications a JOIN training_participants part ON part.application_id = a.id LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Payment Verified' LEFT JOIN training_receipts r ON r.payment_id = pay.id ORDER BY part.registered_at DESC");
     } else {
       const status = { accepted: "Accepted", rejected: "Not Selected", waitlisted: "Waitlisted" }[kind];
-      rows = await all(`SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_applications a LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Verified/Paid' LEFT JOIN training_receipts r ON r.payment_id = pay.id ${status ? "WHERE a.status = ?" : ""} ORDER BY a.submitted_at DESC`, status ? [status] : []);
+      const normalizedStatus = { accepted: "Approved", rejected: "Rejected", waitlisted: "Under Review" }[kind];
+      rows = await all(`SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_applications a LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Payment Verified' LEFT JOIN training_receipts r ON r.payment_id = pay.id ${normalizedStatus ? "WHERE a.status = ?" : ""} ORDER BY a.submitted_at DESC`, normalizedStatus ? [normalizedStatus] : []);
     }
     const workbook = XLSX.utils.book_new();
     const sheet = XLSX.utils.json_to_sheet(exportRows(kind, rows));
@@ -305,7 +323,7 @@ trainingRouter.get("/admin/training-export/:kind", requireAuth, async (req, res,
 trainingRouter.get("/admin/training-stats", requireAuth, async (_req, res, next) => {
   try {
     const [total, review, accepted, waitlisted, rejected, verified, pending, revenue, registered] = await Promise.all([
-      get("SELECT COUNT(*) AS count FROM training_applications"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Accepted'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Waitlisted'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Not Selected'"), get("SELECT COUNT(*) AS count FROM training_payments WHERE status = 'Verified/Paid'"), get("SELECT COUNT(*) AS count FROM training_payments WHERE status IN ('Pending', 'Under Review')"), get("SELECT COALESCE(SUM(amount), 0) AS total FROM training_payments WHERE status = 'Verified/Paid'"), get("SELECT COUNT(*) AS count FROM training_participants")
+      get("SELECT COUNT(*) AS count FROM training_applications"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Approved'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Rejected'"), get("SELECT COUNT(*) AS count FROM training_payments WHERE status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_payments WHERE status IN ('Pending', 'Payment Submitted')"), get("SELECT COALESCE(SUM(amount), 0) AS total FROM training_payments WHERE status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_participants")
     ]);
     return res.json({ total: Number(total?.count || 0), under_review: Number(review?.count || 0), accepted: Number(accepted?.count || 0), waitlisted: Number(waitlisted?.count || 0), rejected: Number(rejected?.count || 0), verified_payments: Number(verified?.count || 0), pending_payments: Number(pending?.count || 0), revenue: Number(revenue?.total || 0), registered: Number(registered?.count || 0) });
   } catch (error) { return next(error); }
