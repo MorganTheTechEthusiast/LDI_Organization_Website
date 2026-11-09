@@ -1,7 +1,21 @@
 import nodemailer from "nodemailer";
 
 const sender = process.env.MAIL_FROM || process.env.SMTP_USER || "liberiadigitalinsights@gmail.com";
-const publicAppUrl = (process.env.PUBLIC_APP_URL || process.env.CLIENT_ORIGIN || "http://localhost:5173").replace(/\/$/, "");
+
+function resolvePublicAppUrl() {
+  const configured = process.env.PUBLIC_APP_URL || process.env.CLIENT_ORIGIN || "http://localhost:5173";
+  const candidate = configured.split(",").map((value) => value.trim()).find(Boolean) || "http://localhost:5173";
+  const normalized = /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`;
+
+  try {
+    return new URL(normalized).origin;
+  } catch {
+    console.warn(`Invalid PUBLIC_APP_URL: ${configured}. Falling back to http://localhost:5173.`);
+    return "http://localhost:5173";
+  }
+}
+
+const publicAppUrl = resolvePublicAppUrl();
 
 const transporter = process.env.SMTP_USER && process.env.SMTP_PASS
   ? nodemailer.createTransport({
