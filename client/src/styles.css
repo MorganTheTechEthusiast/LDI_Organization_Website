@@ -88,6 +88,14 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .mobile-menu-button { color: #6b0f1a; border: 1px solid rgba(107,15,26,.15); border-radius: 4px; padding: 8px; }
 .mobile-nav { background: #f8f9fa; }
 .mobile-nav .nav-link { white-space: normal; }
+.nav-dropdown { position: relative; display: flex; align-items: center; }
+.nav-dropdown > .nav-link { display: inline-flex; align-items: center; gap: 5px; }
+.nav-dropdown-menu { position: absolute; top: calc(100% - 8px); left: -16px; display: grid; width: 235px; gap: 2px; padding: 8px; border: 1px solid rgba(107,15,26,.12); border-radius: 5px; background: #fff; box-shadow: 0 16px 30px rgba(23,23,27,.12); }
+.nav-dropdown-item { display: block; padding: 10px 11px; color: #6b0f1a; font-size: 12px; font-weight: 700; line-height: 1.3; }
+.nav-dropdown-item:hover { color: #6b0f1a; background: #fff2eb; }
+.mobile-training-menu { border-top: 1px solid rgba(107,15,26,.1); }
+.mobile-training-links { display: grid; gap: 2px; margin-left: 13px; padding: 5px 0 2px; border-left: 2px solid #e05a2b; }
+.mobile-training-links .nav-link { padding: 9px 14px; font-size: 12px; }
 
 /* Admin workspace */
 .admin-shell { min-height: 100vh; background: #f5f6f8; color: #17171b; }
@@ -236,6 +244,22 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
   .training-card .absolute.left-4 span { padding: 5px 7px; font-size: 9px; }
   .training-card .absolute.left-4 svg { width: 12px; height: 12px; }
 }
+.training-program-hero { background-image: linear-gradient(90deg,rgba(42,5,12,.94) 0%,rgba(107,15,26,.86) 47%,rgba(107,15,26,.36) 100%),url('/girls-in-tech-graduates.jpg'); background-position: center, center 43%; background-size: cover, cover; }
+.training-program-hero::before { opacity: .16; }
+.training-hero-copy { position: relative; z-index: 1; }
+.training-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 30px; }
+.training-hero-link { color: #ffbd74; font-size: 12px; font-weight: 800; }.training-hero-link:hover { color: white; }
+.training-hero-panel { display: grid; grid-template-columns: .9fr 1.1fr; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 7px; background: rgba(20,4,8,.56); box-shadow: 0 25px 60px rgba(30,3,8,.22); backdrop-filter: blur(10px); }
+.training-hero-panel-image { min-height: 330px; background: url('/girls-in-tech-cohort-1.jpg') center 22% / cover; }
+.training-hero-panel-copy { padding: 28px; }
+.fixed.inset-0.z-\[60\] { background: rgba(23,4,9,.68); backdrop-filter: blur(5px); }
+.fixed.inset-0.z-\[60\] form.max-h-\[92vh\] { border: 1px solid rgba(107,15,26,.12); background: #fbfaf8; box-shadow: 0 24px 70px rgba(23,23,27,.24); }
+.fixed.inset-0.z-\[60\] form.max-h-\[92vh\]::before { display: block; height: 7px; margin: -20px -20px 20px; content: ""; background: linear-gradient(90deg,#6b0f1a,#e05a2b,#ffbd74); }
+.fixed.inset-0.z-\[60\] form.max-h-\[92vh\] .field { border-color: #e5d9d6; background: white; box-shadow: 0 2px 8px rgba(107,15,26,.03); }
+.fixed.inset-0.z-\[60\] form.max-h-\[92vh\] .field:focus { border-color: #e05a2b; box-shadow: 0 0 0 3px rgba(224,90,43,.12); }
+.fixed.inset-0.z-\[60\] form.max-h-\[92vh\] > div:nth-of-type(2) button { border-top-width: 3px; }
+@media (max-width: 900px) { .training-hero-panel { grid-template-columns: 1fr; }.training-hero-panel-image { min-height: 240px; }.training-hero-panel-copy { padding: 23px; } }
+@media (max-width: 640px) { .training-program-hero { background-position: center, 62% center; }.training-program-hero > div { padding-top: 58px; padding-bottom: 58px; }.training-program-hero h1 { font-size: 2.65rem; }.training-program-hero p { font-size: 16px; line-height: 1.65; }.training-hero-actions { align-items: stretch; flex-direction: column; }.training-hero-actions .btn-primary { width: 100%; }.training-hero-link { align-self: center; }.training-hero-panel-image { min-height: 205px; }.training-hero-panel-copy { padding: 20px; }.fixed.inset-0.z-\[60\] { padding: 8px; }.fixed.inset-0.z-\[60\] form.max-h-\[92vh\] { padding: 18px; }.fixed.inset-0.z-\[60\] form.max-h-\[92vh\]::before { margin: -18px -18px 17px; }.fixed.inset-0.z-\[60\] form.max-h-\[92vh\] .grid.grid-cols-5 { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 4px; }.fixed.inset-0.z-\[60\] form.max-h-\[92vh\] .grid.grid-cols-5 button { overflow: hidden; font-size: 9px; line-height: 1.25; }.fixed.inset-0.z-\[60\] form.max-h-\[92vh\] .text-2xl { font-size: 1.35rem; } }
 
 /* Light navigation rail inspired by modern analytics workspaces. */
 .admin-sidebar { color: #41434b; background: #fff; border-right: 1px solid #e7e8eb; box-shadow: none; }

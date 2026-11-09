@@ -1,4 +1,4 @@
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import Logo from "./Logo.jsx";
@@ -8,7 +8,6 @@ const links = [
   ["About Us", "/about"],
   ["Programs & Impact", "/programs"],
   ["Digital Opportunities", "/opportunities"],
-  ["Training", "/training"],
   ["Youth Innovation", "/youth-innovation"],
   ["Team", "/team"],
   ["Gallery", "/gallery"],
@@ -17,6 +16,7 @@ const links = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [trainingOpen, setTrainingOpen] = useState(false);
   const navClass = ({ isActive }) =>
     `nav-link font-heading text-sm font-semibold transition ${isActive ? "is-active" : ""}`;
 
@@ -30,6 +30,10 @@ export default function Navbar() {
               {label}
             </NavLink>
           ))}
+          <div className="nav-dropdown" onMouseEnter={() => setTrainingOpen(true)} onMouseLeave={() => setTrainingOpen(false)}>
+            <NavLink to="/training" className={navClass}>Training <ChevronDown className="h-3.5 w-3.5" /></NavLink>
+            {trainingOpen && <div className="nav-dropdown-menu"><NavLink to="/training" className="nav-dropdown-item">All training programs</NavLink><NavLink to="/training/girls-in-tech-cohort-2" className="nav-dropdown-item">Girls in Tech · Cohort #2</NavLink></div>}
+          </div>
           <ThemeToggle />
           <NavLink to="/get-involved" className="btn-crimson px-5 py-2.5 text-sm">Get Involved <ArrowRight className="h-4 w-4" /></NavLink>
         </div>
@@ -48,6 +52,7 @@ export default function Navbar() {
                 {label}
               </NavLink>
             ))}
+            <div className="mobile-training-menu"><button type="button" className="nav-link flex w-full items-center justify-between text-left" onClick={() => setTrainingOpen((value) => !value)}>Training <ChevronDown className={`h-4 w-4 transition ${trainingOpen ? "rotate-180" : ""}`} /></button>{trainingOpen && <div className="mobile-training-links"><NavLink to="/training" className={navClass} onClick={() => setOpen(false)}>All training programs</NavLink><NavLink to="/training/girls-in-tech-cohort-2" className={navClass} onClick={() => setOpen(false)}>Girls in Tech · Cohort #2</NavLink></div>}</div>
             <NavLink to="/get-involved" className="btn-crimson mt-2 justify-center" onClick={() => setOpen(false)}>Get Involved <ArrowRight className="h-4 w-4" /></NavLink>
           </div>
         </div>

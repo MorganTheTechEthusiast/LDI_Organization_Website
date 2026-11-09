@@ -305,7 +305,6 @@ trainingRouter.get("/admin/training-export/:kind", requireAuth, async (req, res,
     } else if (kind === "registered") {
       rows = await all("SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number, part.group_name, part.registered_at FROM training_applications a JOIN training_participants part ON part.application_id = a.id LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Payment Verified' LEFT JOIN training_receipts r ON r.payment_id = pay.id ORDER BY part.registered_at DESC");
     } else {
-      const status = { accepted: "Accepted", rejected: "Not Selected", waitlisted: "Waitlisted" }[kind];
       const normalizedStatus = { accepted: "Approved", rejected: "Rejected", waitlisted: "Under Review" }[kind];
       rows = await all(`SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_applications a LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Payment Verified' LEFT JOIN training_receipts r ON r.payment_id = pay.id ${normalizedStatus ? "WHERE a.status = ?" : ""} ORDER BY a.submitted_at DESC`, normalizedStatus ? [normalizedStatus] : []);
     }
