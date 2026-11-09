@@ -23,7 +23,7 @@ export default function Navbar() {
   return (
     <header className="site-header sticky top-0 z-50">
       <nav className="container-tight flex min-h-[76px] items-center justify-between gap-8 px-4 sm:px-6 lg:px-8">
-        <Logo to="/" size="nav" />
+        <Logo to="/" size="nav" className="site-nav-logo" />
         <div className="hidden items-center gap-9 lg:flex">
           {links.map(([label, href]) => (
             <NavLink key={href} to={href} className={navClass}>
