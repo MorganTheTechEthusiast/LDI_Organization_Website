@@ -223,4 +223,12 @@ The public application page is available at `/training/girls-in-tech-cohort-2`. 
 
 Payment submissions remain `Payment Submitted` until an authenticated administrator verifies them. Only `Payment Verified` can create a receipt, and receipt PDFs are available only when the applicant reference and email match. Screenshot proof is stored through the authenticated Cloudinary payment-proof upload when Cloudinary is configured; applicants can also submit a transaction ID.
 
-For confirmation and status emails, configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, and `PUBLIC_APP_URL` in the backend environment. Gmail requires an App Password for `SMTP_PASS`. Email delivery is best-effort: an application is still saved if SMTP is temporarily unavailable, and the server logs the delivery failure.
+For confirmation and status emails on Railway, configure the Brevo HTTPS API in the backend service:
+
+```env
+BREVO_API_KEY=your_brevo_api_key
+MAIL_FROM=liberiadigitalinsights@gmail.com
+PUBLIC_APP_URL=https://your-frontend-domain.example
+```
+
+The `MAIL_FROM` address must be registered and verified as a sender in Brevo. The backend sends transactional messages through Brevo's HTTPS endpoint, which avoids Railway SMTP connection timeouts. SMTP variables remain available as a local-development fallback; Gmail requires an App Password for `SMTP_PASS`. Email delivery is best-effort: an application is still saved if email delivery is temporarily unavailable, and the server logs the delivery failure.

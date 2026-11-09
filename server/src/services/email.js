@@ -13,16 +13,51 @@ const transporter = process.env.SMTP_USER && process.env.SMTP_PASS
   : null;
 
 export function emailConfigured() {
-  return Boolean(transporter);
+  return Boolean(process.env.BREVO_API_KEY || transporter);
+}
+
+async function sendViaBrevo({ to, subject, html, text }) {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": process.env.BREVO_API_KEY,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      sender: { name: "Liberia Digital Insights", email: sender },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+      textContent: text
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Brevo email failed (${response.status}): ${await response.text()}`);
+  }
+
+  return { sent: true, configured: true, provider: "brevo" };
 }
 
 export async function sendEmail({ to, subject, html, text }) {
-  if (!transporter || !to) {
-    console.warn("Email notification skipped: SMTP_USER/SMTP_PASS are not configured.");
+  if (!to) {
+    console.warn("Email notification skipped: recipient address is missing.");
     return { sent: false, configured: false };
   }
+
+  // Prefer HTTPS email delivery because Railway SMTP connections may time out.
+  if (process.env.BREVO_API_KEY) {
+    return sendViaBrevo({ to, subject, html, text });
+  }
+
+  if (!transporter) {
+    console.warn("Email notification skipped: configure BREVO_API_KEY or SMTP_USER/SMTP_PASS.");
+    return { sent: false, configured: false };
+  }
+
   await transporter.sendMail({ from: sender, to, subject, text, html });
-  return { sent: true, configured: true };
+  return { sent: true, configured: true, provider: "smtp" };
 }
 
 function shell(content) {

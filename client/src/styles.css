@@ -252,7 +252,7 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .training-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 30px; }
 .training-hero-link { color: #ffbd74; font-size: 12px; font-weight: 800; }.training-hero-link:hover { color: white; }
 .training-hero-panel { display: grid; grid-template-columns: .9fr 1.1fr; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 7px; background: rgba(20,4,8,.56); box-shadow: 0 25px 60px rgba(30,3,8,.22); backdrop-filter: blur(10px); }
-.training-hero-panel-image { min-height: 330px; background: url('/girls-in-tech-cohort-1.jpg') center 22% / cover; }
+.training-hero-panel-image { min-height: 330px; background: url('/girls-in-tech-cohort-1.jpg') 18% 22% / cover; }
 .training-hero-panel-copy { padding: 28px; }
 .fixed.inset-0.z-\[60\] { background: rgba(23,4,9,.68); backdrop-filter: blur(5px); }
 .fixed.inset-0.z-\[60\] form.max-h-\[92vh\] { border: 1px solid rgba(107,15,26,.12); background: #fbfaf8; box-shadow: 0 24px 70px rgba(23,23,27,.24); }
