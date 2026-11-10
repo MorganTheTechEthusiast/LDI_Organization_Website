@@ -408,12 +408,13 @@ trainingRouter.get("/admin/training-export/:kind", requireAuth, auditViewer, asy
   } catch (error) { return next(error); }
 });
 
-trainingRouter.get("/admin/training-stats", requireAuth, auditViewer, async (_req, res, next) => {
+trainingRouter.get("/admin/training-stats", requireAuth, async (req, res, next) => {
   try {
     const [total, review, accepted, waitlisted, rejected, verified, pending, revenue, registered] = await Promise.all([
       get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Approved'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Rejected'"), get("SELECT COUNT(*) AS count FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status IN ('Pending', 'Payment Submitted')"), get("SELECT COALESCE(SUM(pay.amount), 0) AS total FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_participants part JOIN training_applications a ON a.id = part.application_id WHERE a.deleted_at IS NULL")
     ]);
-    return res.json({ total: Number(total?.count || 0), under_review: Number(review?.count || 0), accepted: Number(accepted?.count || 0), waitlisted: Number(waitlisted?.count || 0), rejected: Number(rejected?.count || 0), verified_payments: Number(verified?.count || 0), pending_payments: Number(pending?.count || 0), revenue: Number(revenue?.total || 0), registered: Number(registered?.count || 0) });
+    const canViewFinancials = ["superadmin", "training_manager", "finance_reviewer", "auditor"].includes(req.user?.role);
+    return res.json({ total: Number(total?.count || 0), under_review: Number(review?.count || 0), accepted: Number(accepted?.count || 0), waitlisted: Number(waitlisted?.count || 0), rejected: Number(rejected?.count || 0), verified_payments: Number(verified?.count || 0), pending_payments: Number(pending?.count || 0), revenue: canViewFinancials ? Number(revenue?.total || 0) : null, registered: Number(registered?.count || 0) });
   } catch (error) { return next(error); }
 });
 
