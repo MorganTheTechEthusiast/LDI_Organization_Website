@@ -11,6 +11,7 @@
     "create-super-admin": "node src/create-super-admin.js",
     "create-admin-user": "node src/create-admin-user.js",
     "promote-super-admin": "node src/promote-super-admin.js",
+    "reset-training-applications": "node src/reset-training-applications.js",
     "migrate:sqlite-to-postgres": "node src/migrate-sqlite-to-postgres.js"
   },
   "dependencies": {
