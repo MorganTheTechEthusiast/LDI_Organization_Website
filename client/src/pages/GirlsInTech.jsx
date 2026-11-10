@@ -44,6 +44,7 @@ export default function GirlsInTech() {
   const [statusForm, setStatusForm] = useState({ application_reference: "", email: "" });
   const [status, setStatus] = useState(null);
   const [statusError, setStatusError] = useState("");
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ payment_method: "Orange Money", amount: program.fee || "", payment_reference: "", transaction_id: "", evidence_url: "", proof: null });
 
   const learnItems = useMemo(() => Array.isArray(program.learn_items) ? program.learn_items : [], [program.learn_items]);
@@ -90,6 +91,8 @@ export default function GirlsInTech() {
       }
       await api.post("/training-payments", { ...paymentForm, proof: undefined, evidence_url: evidenceUrl, application_reference: status.application_reference, email: status.email });
       setStatus({ ...status, status: "Payment Submitted", payment_status: "Payment Submitted", payment: { status: "Payment Submitted" } });
+      setShowPaymentConfirmation(true);
+      setPaymentForm({ payment_method: "Orange Money", amount: program.fee || "", payment_reference: "", transaction_id: "", evidence_url: "", proof: null });
     } catch (requestError) { setStatusError(requestError.response?.data?.message || "Payment submission failed."); }
   }
 
@@ -103,6 +106,7 @@ export default function GirlsInTech() {
       </section>
 
       {result && showConfirmation && <ApplicationConfirmation applicant={form.full_name} email={form.email} reference={result.application_reference} close={() => setShowConfirmation(false)} track={() => { setStatusForm({ application_reference: result.application_reference, email: form.email }); setShowConfirmation(false); document.getElementById("status")?.scrollIntoView({ behavior: "smooth" }); }} />}
+      {showPaymentConfirmation && <PaymentConfirmation close={() => setShowPaymentConfirmation(false)} />}
 
       <section className="section-pad bg-paper"><SectionHeader eyebrow="About the program" title="Skills that open the next door." text={program.about_ldi} /><div className="container-tight grid gap-6 md:grid-cols-2"><article className="card p-7"><p className="eyebrow">What you will learn</p><div className="mt-5 grid gap-4">{learnItems.map((item) => <p className="flex gap-3 text-[15px] leading-7 text-black/70" key={item}><CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-ember" />{item}</p>)}</div></article><article className="card p-7"><p className="eyebrow">Program details</p><div className="mt-5 grid gap-4 text-[15px] leading-7 text-black/70"><p><strong className="text-ink">Duration:</strong> {program.duration}</p><p><strong className="text-ink">Schedule:</strong> {program.schedule}</p><p><strong className="text-ink">Eligibility:</strong> {program.eligibility}</p><p><strong className="text-ink">Fee:</strong> {Number(program.fee) ? `${program.currency} ${program.fee}` : "See official payment instructions"}</p></div></article></div></section>
 
@@ -148,6 +152,19 @@ function ApplicationConfirmation({ applicant, email, reference, close, track }) 
         <button type="button" className="btn-crimson" onClick={track}>Track application <ArrowRight className="h-4 w-4" /></button>
         <button type="button" className="rounded-md bg-black/5 px-5 py-3 text-sm font-bold text-ink" onClick={close}>Continue browsing</button>
       </div>
+    </div>
+  </div>;
+}
+
+function PaymentConfirmation({ close }) {
+  return <div className="fixed inset-0 z-[75] grid place-items-center bg-black/65 p-4" role="dialog" aria-modal="true" aria-labelledby="payment-confirmation-title">
+    <div className="ldi-modal w-full max-w-xl rounded-sm bg-white p-7 shadow-soft sm:p-10">
+      <div className="ldi-modal-icon ldi-modal-icon-success"><CheckCircle2 className="h-7 w-7" /></div>
+      <p className="eyebrow mt-6 text-green-800">Payment submitted</p>
+      <h2 id="payment-confirmation-title" className="mt-2 text-3xl font-black text-ink">We received your payment details.</h2>
+      <p className="mt-4 leading-7 text-black/65">Thank you. The LDI team will review your transaction reference and payment proof manually. We will email you once your payment has been verified.</p>
+      <div className="mt-6 rounded-sm border border-orange-100 bg-orange-50 p-4 text-sm leading-6 text-black/70"><strong className="text-maroon">What happens next?</strong><br />Please keep your payment confirmation safe. Your application will remain under review until an authorized LDI administrator completes verification.</div>
+      <button type="button" className="btn-crimson mt-7" onClick={close}>Continue</button>
     </div>
   </div>;
 }

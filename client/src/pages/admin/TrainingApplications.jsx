@@ -1,4 +1,4 @@
-import { Archive, CheckCircle2, ClipboardList, Clock3, DollarSign, Download, ExternalLink, Search, Trash2, UserCheck, XCircle } from "lucide-react";
+import { Archive, CheckCircle2, ClipboardList, Clock3, DollarSign, Download, ExternalLink, Search, Trash2, UserCheck, XCircle, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
 
@@ -14,6 +14,9 @@ export default function TrainingApplications() {
   const [selected, setSelected] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [actionDialog, setActionDialog] = useState(null);
+  const [actionReason, setActionReason] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
   const currentUser = (() => { try { return JSON.parse(localStorage.getItem("ldi_user") || "{}"); } catch { return {}; } })();
 
   async function load() {
@@ -34,27 +37,37 @@ export default function TrainingApplications() {
   }
 
   async function archiveApplication(application) {
-    const reason = window.prompt(`Why are you archiving ${application.full_name} (${application.application_reference})? Enter at least 10 characters.`);
-    if (!reason || reason.trim().length < 10) { if (reason !== null) setError("Please provide an archive reason of at least 10 characters."); return; }
-    try {
-      await api.post(`/admin/training-applications/${application.id}/archive`, { reason: reason.trim() });
-      setMessage(`Application ${application.application_reference} was archived. Financial records were preserved.`);
-      await load();
-    } catch (requestError) { setError(requestError.response?.data?.message || "Could not archive application."); }
+    setActionReason("");
+    setActionDialog({ type: "archive", application });
   }
 
   async function deleteApplication(application) {
-    const reason = window.prompt(`Why are you permanently deleting ${application.full_name} (${application.application_reference})? This cannot be undone. Enter at least 10 characters.`);
-    if (!reason || reason.trim().length < 10) { if (reason !== null) setError("Please provide a deletion reason of at least 10 characters."); return; }
-    const confirmed = window.confirm(`Permanently delete ${application.full_name} (${application.application_reference})? Verified payments and receipts cannot be deleted.`);
-    if (!confirmed) return;
+    setActionReason("");
+    setActionDialog({ type: "delete", application });
+  }
+
+  async function confirmAction() {
+    if (!actionDialog || actionReason.trim().length < 10) {
+      setError(`Please provide a ${actionDialog?.type === "delete" ? "deletion" : "archive"} reason of at least 10 characters.`);
+      return;
+    }
+    setActionBusy(true);
     setError("");
     try {
-      await api.delete(`/admin/training-applications/${application.id}`, { data: { reason: reason.trim() } });
-      setMessage(`Application ${application.application_reference} was permanently deleted.`);
-      setSelected(null);
+      const { application, type } = actionDialog;
+      if (type === "delete") {
+        await api.delete(`/admin/training-applications/${application.id}`, { data: { reason: actionReason.trim() } });
+        setMessage(`Application ${application.application_reference} was permanently deleted.`);
+        setSelected(null);
+      } else {
+        await api.post(`/admin/training-applications/${application.id}/archive`, { reason: actionReason.trim() });
+        setMessage(`Application ${application.application_reference} was archived. Financial records were preserved.`);
+      }
+      setActionDialog(null);
+      setActionReason("");
       await load();
-    } catch (requestError) { setError(requestError.response?.data?.message || "Could not delete application."); }
+    } catch (requestError) { setError(requestError.response?.data?.message || `Could not ${actionDialog.type} application.`); }
+    finally { setActionBusy(false); }
   }
 
   async function downloadExport(kind) {
@@ -66,6 +79,7 @@ export default function TrainingApplications() {
     <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{[["Total applications", stats.total, ClipboardList], ["Under review", stats.under_review, Clock3], ["Approved", stats.accepted, CheckCircle2], ["Verified payments", stats.verified_payments, DollarSign], ["Registered", stats.registered, UserCheck]].map(([label, value, Icon]) => <div className="rounded-lg bg-white p-5 shadow-sm" key={label}><Icon className="mb-4 h-6 w-6 text-maroon" /><p className="text-3xl font-black text-ink">{value ?? "-"}</p><p className="mt-1 text-xs font-bold text-black/55">{label}</p></div>)}</div>
     {tab === "applications" ? <ApplicationTable applications={applications} search={search} setSearch={setSearch} updateApplication={updateApplication} archiveApplication={archiveApplication} deleteApplication={deleteApplication} canDelete={currentUser.role === "superadmin"} setSelected={setSelected} downloadExport={downloadExport} /> : <PaymentTable payments={payments} updatePayment={updatePayment} downloadExport={downloadExport} />}
     {selected && <ApplicationDetail application={selected} close={() => setSelected(null)} />}
+    {actionDialog && <ApplicationActionDialog action={actionDialog.type} application={actionDialog.application} reason={actionReason} setReason={setActionReason} busy={actionBusy} close={() => setActionDialog(null)} confirm={confirmAction} />}
   </div>;
 }
 
@@ -82,3 +96,19 @@ function ApplicationDetail({ application, close }) {
 }
 
 function ExportMenu({ downloadExport }) { return <div className="flex flex-wrap gap-2"><select className="field px-3 py-2 text-xs font-bold" defaultValue="" onChange={(event) => { if (event.target.value) downloadExport(event.target.value); event.target.value = ""; }}><option value="">Export Excel...</option><option value="complete">All Applicants</option><option value="accepted">Approved Applicants</option><option value="rejected">Rejected Applicants</option><option value="waitlisted">Under Review</option><option value="registered">Registered Participants</option><option value="verified-payments">Verified Payments</option><option value="pending-payments">Pending Payments</option></select><button className="btn-dark px-3 py-2 text-xs" onClick={() => downloadExport("complete")}><Download className="h-4 w-4" /> Export All</button></div>; }
+
+function ApplicationActionDialog({ action, application, reason, setReason, busy, close, confirm }) {
+  const permanent = action === "delete";
+  return <div className="fixed inset-0 z-[70] grid place-items-center bg-black/65 p-4" role="dialog" aria-modal="true" aria-labelledby="application-action-title">
+    <div className={`ldi-modal w-full max-w-lg rounded-sm bg-white p-7 shadow-soft sm:p-9 ${permanent ? "ldi-modal-danger" : ""}`}>
+      <div className={`ldi-modal-icon ${permanent ? "ldi-modal-icon-danger" : "ldi-modal-icon-warning"}`}><AlertTriangle className="h-7 w-7" /></div>
+      <p className="eyebrow mt-6">Administrative action</p>
+      <h2 id="application-action-title" className="mt-2 text-2xl font-black text-ink">{permanent ? "Permanently delete application?" : "Archive application?"}</h2>
+      <p className="mt-3 leading-7 text-black/65"><strong className="text-ink">{application.full_name}</strong><br /><span className="text-maroon">{application.application_reference}</span></p>
+      <p className="mt-4 rounded-sm bg-red-50 p-4 text-sm leading-6 text-maroon">{permanent ? "This action cannot be undone. Verified payments and receipts are protected and cannot be deleted." : "This hides the application from active lists while preserving financial records and the audit trail."}</p>
+      <label className="mt-5 grid gap-2"><span className="label">{permanent ? "Reason for permanent deletion" : "Reason for archiving"} <span className="text-maroon">*</span></span><textarea className="field min-h-24" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Enter at least 10 characters" autoFocus /></label>
+      <p className="mt-2 text-xs text-black/50">This reason, your account, time, and action will be recorded in the audit log.</p>
+      <div className="mt-7 flex justify-end gap-3"><button type="button" className="rounded-md bg-black/5 px-5 py-3 text-sm font-bold text-ink" onClick={close} disabled={busy}>Cancel</button><button type="button" className={permanent ? "admin-danger-button" : "btn-crimson"} onClick={confirm} disabled={busy}>{busy ? "Processing..." : permanent ? "Permanently delete" : "Archive application"}</button></div>
+    </div>
+  </div>;
+}

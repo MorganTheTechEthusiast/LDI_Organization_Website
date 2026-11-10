@@ -273,6 +273,14 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .application-confirmation { position: relative; max-height: min(720px, 92vh); overflow-y: auto; }
 .application-confirmation-close { position: absolute; top: 16px; right: 18px; display: grid; width: 34px; height: 34px; place-items: center; color: #6b0f1a; border-radius: 4px; font-size: 25px; line-height: 1; transition: background .2s ease, color .2s ease; }
 .application-confirmation-close:hover { color: white; background: #6b0f1a; }
+.ldi-modal { position: relative; max-height: min(720px, 92vh); overflow-y: auto; border: 1px solid #eadfe0; }
+.ldi-modal-icon { display: grid; width: 58px; height: 58px; place-items: center; border-radius: 50%; }
+.ldi-modal-icon-success { color: #197a4b; background: #e8f8ef; }
+.ldi-modal-icon-warning { color: #9a5b00; background: #fff1d6; }
+.ldi-modal-icon-danger { color: #8e1522; background: #fae9eb; }
+.admin-danger-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 4px; padding: 12px 18px; color: white; background: #8e1522; font-size: 13px; font-weight: 800; transition: background .2s ease, transform .2s ease; }
+.admin-danger-button:hover { background: #6b0f1a; transform: translateY(-1px); }
+.admin-danger-button:disabled,.ldi-modal button:disabled { cursor: wait; opacity: .65; transform: none; }
 .training-hero-panel { display: grid; grid-template-columns: .9fr 1.1fr; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 7px; background: rgba(20,4,8,.56); box-shadow: 0 25px 60px rgba(30,3,8,.22); backdrop-filter: blur(10px); }
 .training-hero-panel-image { min-height: 330px; background: url('/girls-in-tech-cohort-1.jpg') 18% 22% / cover; }
 .training-hero-panel-copy { padding: 28px; }
