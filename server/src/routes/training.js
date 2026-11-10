@@ -2,7 +2,7 @@ import express from "express";
 import PDFDocument from "pdfkit";
 import XLSX from "xlsx";
 import { all, get, run } from "../db.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireSuperAdmin } from "../middleware/auth.js";
 import { applicationReceivedEmail, sendEmail, statusChangeEmail } from "../services/email.js";
 
 export const trainingRouter = express.Router();
@@ -40,8 +40,19 @@ async function getProgram() {
   return get("SELECT * FROM training_programs WHERE slug = ?", [PROGRAM_SLUG]);
 }
 
-async function writeAudit(userId, action, entityType, entityId, metadata = {}) {
-  await run("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, metadata) VALUES (?, ?, ?, ?, ?)", [userId || null, action, entityType, entityId || null, JSON.stringify(metadata)]);
+async function writeAudit(userId, action, entityType, entityId, metadata = {}, context = {}) {
+  await run("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, metadata, ip_address, user_agent, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [userId || null, action, entityType, entityId || null, JSON.stringify(metadata), context.ip_address || null, context.user_agent || null, context.reason || null]);
+}
+
+function auditContext(req, reason = "") {
+  return { ip_address: req.ip, user_agent: req.get("user-agent"), reason };
+}
+
+async function notifySuperAdmins(subject, textBody, htmlBody) {
+  const admins = await all("SELECT email FROM users WHERE role = 'superadmin' AND email IS NOT NULL");
+  const fallback = text(process.env.SUPER_ADMIN_EMAIL);
+  const recipients = [...new Set([...admins.map((admin) => admin.email), ...(fallback ? [fallback] : [])])];
+  await Promise.all(recipients.map((to) => sendEmail({ to, subject, text: textBody, html: htmlBody })));
 }
 
 function validateEmail(email) {
@@ -75,7 +86,7 @@ trainingRouter.post("/training-applications", publicRateLimit, async (req, res, 
     if (!validateEmail(text(body.email))) return res.status(400).json({ message: "Please provide a valid email address." });
     if (!body.declaration_accepted || !body.terms_accepted || !body.privacy_consent) return res.status(400).json({ message: "You must accept the declaration, terms, and privacy consent before submitting." });
 
-    const duplicate = await get("SELECT application_reference FROM training_applications WHERE program_id = ? AND lower(email) = lower(?)", [program.id, text(body.email)]);
+    const duplicate = await get("SELECT application_reference FROM training_applications WHERE program_id = ? AND lower(email) = lower(?) AND deleted_at IS NULL", [program.id, text(body.email)]);
     if (duplicate) return res.status(409).json({ message: "An application already exists for this email address and cohort.", application_reference: duplicate.application_reference });
 
     const fields = ["program_id", "full_name", "date_of_birth", "gender", "phone", "whatsapp", "email", "residential_address", "county", "city_community", "educational_status", "institution", "highest_qualification", "occupation", "computer_experience", "previous_training", "current_skills", "has_computer", "has_smartphone", "interest_reason", "expected_outcome", "motivation_statement", "relevant_experience", "learned_from", "emergency_name", "emergency_phone", "declaration_accepted", "terms_accepted", "privacy_consent", "photo_url", "supporting_document_url"];
@@ -101,7 +112,7 @@ trainingRouter.post("/training-applications/status", publicRateLimit, async (req
     if (!reference || !email || !validateEmail(email)) return res.status(400).json({ message: "Application reference and the email used to apply are required." });
     const application = await get(`SELECT a.application_reference, a.full_name, a.email, a.status, a.payment_status, a.submitted_at, p.title, p.cohort_number
       FROM training_applications a JOIN training_programs p ON p.id = a.program_id
-      WHERE a.application_reference = ? AND lower(a.email) = lower(?)`, [reference, email]);
+      WHERE a.application_reference = ? AND lower(a.email) = lower(?) AND a.deleted_at IS NULL`, [reference, email]);
     if (!application) return res.status(404).json({ message: "We could not find an application with those details." });
     const payment = await get("SELECT pay.status, pay.amount, pay.currency, pay.payment_method, pay.payment_reference, pay.transaction_id, pay.evidence_url, r.receipt_number FROM training_payments pay LEFT JOIN training_receipts r ON r.payment_id = pay.id WHERE pay.application_id = ? ORDER BY pay.id DESC LIMIT 1", [await getApplicationId(reference)]);
     return res.json({ ...application, payment: payment || null });
@@ -131,7 +142,7 @@ trainingRouter.post("/training-payments", publicRateLimit, async (req, res, next
     const evidenceUrl = text(req.body?.evidence_url);
     const amount = Number(req.body?.amount);
     if (!reference || !email || !method || !Number.isFinite(amount) || amount <= 0 || (!paymentReference && !transactionId && !evidenceUrl)) return res.status(400).json({ message: "Application, email, payment method, amount, and a transaction ID or payment proof are required." });
-    const application = await get("SELECT * FROM training_applications WHERE application_reference = ? AND lower(email) = lower(?)", [reference, email]);
+    const application = await get("SELECT * FROM training_applications WHERE application_reference = ? AND lower(email) = lower(?) AND deleted_at IS NULL", [reference, email]);
     if (!application) return res.status(404).json({ message: "Application not found." });
     const existing = await get("SELECT id FROM training_payments WHERE application_id = ? AND (payment_reference = ? OR transaction_id = ?)", [application.id, paymentReference || transactionId, transactionId || paymentReference]);
     if (existing) return res.status(409).json({ message: "This payment reference has already been submitted." });
@@ -150,7 +161,7 @@ trainingRouter.get("/admin/training-applications", requireAuth, async (req, res,
     if (text(req.query.search)) { conditions.push("(lower(a.full_name) LIKE lower(?) OR lower(a.application_reference) LIKE lower(?))"); params.push(`%${text(req.query.search)}%`, `%${text(req.query.search)}%`); }
     if (text(req.query.status)) { conditions.push("a.status = ?"); params.push(text(req.query.status)); }
     if (text(req.query.county)) { conditions.push("a.county = ?"); params.push(text(req.query.county)); }
-    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const where = conditions.length ? `WHERE a.deleted_at IS NULL AND ${conditions.join(" AND ")}` : "WHERE a.deleted_at IS NULL";
     const rows = await all(`SELECT a.*, p.title AS program_title, p.cohort_number FROM training_applications a JOIN training_programs p ON p.id = a.program_id ${where} ORDER BY a.submitted_at DESC, a.id DESC`, params);
     return res.json(rows);
   } catch (error) { return next(error); }
@@ -158,33 +169,55 @@ trainingRouter.get("/admin/training-applications", requireAuth, async (req, res,
 
 trainingRouter.get("/admin/training-applications/:id", requireAuth, async (req, res, next) => {
   try {
-    const application = await get("SELECT a.*, p.title AS program_title, p.cohort_number, p.fee, p.currency FROM training_applications a JOIN training_programs p ON p.id = a.program_id WHERE a.id = ?", [req.params.id]);
+    const application = await get("SELECT a.*, p.title AS program_title, p.cohort_number, p.fee, p.currency FROM training_applications a JOIN training_programs p ON p.id = a.program_id WHERE a.id = ? AND a.deleted_at IS NULL", [req.params.id]);
     if (!application) return res.status(404).json({ message: "Application not found." });
     const payments = await all("SELECT * FROM training_payments WHERE application_id = ? ORDER BY id DESC", [req.params.id]);
     return res.json({ ...application, payments });
   } catch (error) { return next(error); }
 });
 
-trainingRouter.delete("/admin/training-applications/:id", requireAuth, async (req, res, next) => {
+trainingRouter.post("/admin/training-applications/:id/archive", requireAuth, async (req, res, next) => {
   try {
+    const reason = text(req.body?.reason);
+    if (reason.length < 10) return res.status(400).json({ message: "A deletion reason of at least 10 characters is required." });
+    const application = await get("SELECT id, application_reference, full_name, deleted_at FROM training_applications WHERE id = ?", [req.params.id]);
+    if (!application) return res.status(404).json({ message: "Application not found." });
+    if (application.deleted_at) return res.status(409).json({ message: "This application is already archived." });
+
+    await run("UPDATE training_applications SET deleted_at = CURRENT_TIMESTAMP, deleted_by = ?, deletion_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [req.user.id, reason, application.id]);
+    await writeAudit(req.user.id, "application_archived", "training_application", application.id, { application_reference: application.application_reference, full_name: application.full_name }, auditContext(req, reason));
+    await notifySuperAdmins(`LDI application archived - ${application.application_reference}`, `Admin ${req.user.email} archived ${application.full_name} (${application.application_reference}). Reason: ${reason}`, `<p><strong>${req.user.name || req.user.email}</strong> archived <strong>${application.full_name}</strong> (${application.application_reference}).</p><p>Reason: ${reason}</p>`).catch((error) => console.error("Archive alert email failed.", error));
+
+    return res.json({ message: "Application archived. Financial records were preserved." });
+  } catch (error) { return next(error); }
+});
+
+trainingRouter.delete("/admin/training-applications/:id", requireAuth, requireSuperAdmin, async (req, res, next) => {
+  try {
+    const reason = text(req.body?.reason);
+    if (reason.length < 10) return res.status(400).json({ message: "A deletion reason of at least 10 characters is required." });
     const application = await get("SELECT id, application_reference, full_name FROM training_applications WHERE id = ?", [req.params.id]);
     if (!application) return res.status(404).json({ message: "Application not found." });
+    const verified = await get("SELECT COUNT(*) AS count FROM training_payments WHERE application_id = ? AND status = 'Payment Verified'", [application.id]);
+    const receipt = await get("SELECT COUNT(*) AS count FROM training_receipts WHERE application_id = ?", [application.id]);
+    if (Number(verified.count) > 0 || Number(receipt.count) > 0) return res.status(409).json({ message: "This application has verified financial records and cannot be permanently deleted. Archive it instead." });
 
-    // Remove dependent records first so receipts, payments, documents, and
-    // participant entries cannot remain orphaned after the application is removed.
     await run("DELETE FROM training_receipts WHERE application_id = ?", [application.id]);
     await run("DELETE FROM training_payments WHERE application_id = ?", [application.id]);
     await run("DELETE FROM application_documents WHERE application_id = ?", [application.id]);
     await run("DELETE FROM training_participants WHERE application_id = ?", [application.id]);
     await run("DELETE FROM training_applications WHERE id = ?", [application.id]);
-    await writeAudit(req.user.id, "application_deleted", "training_application", application.id, { application_reference: application.application_reference, full_name: application.full_name });
-
-    return res.json({ message: "Application and related records deleted." });
+    await writeAudit(req.user.id, "application_deleted", "training_application", application.id, { application_reference: application.application_reference, full_name: application.full_name }, auditContext(req, reason));
+    await notifySuperAdmins(`LDI application permanently deleted - ${application.application_reference}`, `Super admin ${req.user.email} permanently deleted ${application.full_name} (${application.application_reference}). Reason: ${reason}`, `<p><strong>${req.user.name || req.user.email}</strong> permanently deleted <strong>${application.full_name}</strong> (${application.application_reference}).</p><p>Reason: ${reason}</p>`).catch((error) => console.error("Deletion alert email failed.", error));
+    return res.json({ message: "Application permanently deleted." });
   } catch (error) { return next(error); }
 });
 
 trainingRouter.put("/admin/training-applications/:id", requireAuth, async (req, res, next) => {
   try {
+    const existingApplication = await get("SELECT id, deleted_at FROM training_applications WHERE id = ?", [req.params.id]);
+    if (!existingApplication) return res.status(404).json({ message: "Application not found." });
+    if (existingApplication.deleted_at) return res.status(409).json({ message: "Archived applications cannot be edited." });
     const status = text(req.body?.status);
     if (status && !applicationStatuses.includes(status)) return res.status(400).json({ message: "Invalid application status." });
     await run("UPDATE training_applications SET status = COALESCE(?, status), admin_notes = COALESCE(?, admin_notes), updated_at = CURRENT_TIMESTAMP WHERE id = ?", [status || null, req.body?.admin_notes ?? null, req.params.id]);
@@ -206,6 +239,8 @@ trainingRouter.put("/admin/training-payments/:id", requireAuth, async (req, res,
     if (!paymentStatuses.includes(status)) return res.status(400).json({ message: "Invalid payment status." });
     const payment = await get("SELECT * FROM training_payments WHERE id = ?", [req.params.id]);
     if (!payment) return res.status(404).json({ message: "Payment not found." });
+    const paymentApplication = await get("SELECT deleted_at FROM training_applications WHERE id = ?", [payment.application_id]);
+    if (paymentApplication?.deleted_at) return res.status(409).json({ message: "Payments for archived applications cannot be edited." });
     await run("UPDATE training_payments SET status = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, notes = ? WHERE id = ?", [status, req.user.id, text(req.body?.notes), req.params.id]);
     let receipt = null;
     if (status === "Payment Verified") {
@@ -228,6 +263,7 @@ trainingRouter.post("/admin/training-participants", requireAuth, async (req, res
   try {
     const application = await get("SELECT * FROM training_applications WHERE id = ?", [req.body?.application_id]);
     if (!application) return res.status(404).json({ message: "Application not found." });
+    if (application.deleted_at) return res.status(409).json({ message: "Archived applications cannot be registered." });
     if (application.status !== "Approved" || application.payment_status !== "Payment Verified") return res.status(400).json({ message: "Only approved applicants with verified payment can be registered." });
     await run("INSERT INTO training_participants (application_id, program_id, group_name) VALUES (?, ?, ?)", [application.id, application.program_id, text(req.body?.group_name)]);
     await run("UPDATE training_applications SET status = 'Registration Completed', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [application.id]);
@@ -238,6 +274,37 @@ trainingRouter.post("/admin/training-participants", requireAuth, async (req, res
 
 trainingRouter.get("/admin/training-program", requireAuth, async (_req, res, next) => {
   try { return res.json(publicProgram(await getProgram())); } catch (error) { return next(error); }
+});
+
+trainingRouter.get("/admin/audit-logs", requireAuth, async (req, res, next) => {
+  try {
+    const params = [];
+    const conditions = [];
+    const search = text(req.query.search);
+    const action = text(req.query.action);
+    if (search) {
+      conditions.push("(lower(COALESCE(u.name, '')) LIKE lower(?) OR lower(COALESCE(u.email, '')) LIKE lower(?) OR lower(COALESCE(audit_logs.metadata, '')) LIKE lower(?))");
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    if (action) { conditions.push("audit_logs.action = ?"); params.push(action); }
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const rows = await all(`SELECT audit_logs.id, audit_logs.created_at, audit_logs.action, audit_logs.entity_type, audit_logs.entity_id, audit_logs.metadata, audit_logs.ip_address, audit_logs.user_agent, audit_logs.reason, u.name AS actor_name, u.email AS actor_email FROM audit_logs LEFT JOIN users u ON u.id = audit_logs.user_id ${where} ORDER BY audit_logs.created_at DESC, audit_logs.id DESC LIMIT 500`, params);
+    return res.json(rows);
+  } catch (error) { return next(error); }
+});
+
+trainingRouter.get("/admin/audit-export", requireAuth, async (_req, res, next) => {
+  try {
+    const rows = await all("SELECT audit_logs.created_at AS Date, u.name AS Actor, u.email AS Email, audit_logs.action AS Action, audit_logs.entity_type AS Entity, audit_logs.entity_id AS Entity_ID, audit_logs.reason AS Reason, audit_logs.ip_address AS IP_Address, audit_logs.metadata AS Details FROM audit_logs LEFT JOIN users u ON u.id = audit_logs.user_id ORDER BY audit_logs.created_at DESC, audit_logs.id DESC");
+    const workbook = XLSX.utils.book_new();
+    const sheet = XLSX.utils.json_to_sheet(rows);
+    sheet["!cols"] = [{ wch: 22 }, { wch: 24 }, { wch: 34 }, { wch: 26 }, { wch: 24 }, { wch: 12 }, { wch: 45 }, { wch: 20 }, { wch: 70 }];
+    XLSX.utils.book_append_sheet(workbook, sheet, "Audit Log");
+    const output = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=ldi-audit-log.xlsx");
+    return res.send(output);
+  } catch (error) { return next(error); }
 });
 
 trainingRouter.put("/admin/training-program", requireAuth, async (req, res, next) => {
@@ -319,12 +386,12 @@ trainingRouter.get("/admin/training-export/:kind", requireAuth, async (req, res,
     let rows;
     if (kind === "verified-payments" || kind === "pending-payments") {
       const status = kind === "verified-payments" ? "Payment Verified" : "Payment Submitted";
-      rows = await all(`SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_applications a JOIN training_payments pay ON pay.application_id = a.id LEFT JOIN training_receipts r ON r.payment_id = pay.id WHERE pay.status = ? ORDER BY pay.created_at DESC`, [status]);
+      rows = await all(`SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_applications a JOIN training_payments pay ON pay.application_id = a.id LEFT JOIN training_receipts r ON r.payment_id = pay.id WHERE a.deleted_at IS NULL AND pay.status = ? ORDER BY pay.created_at DESC`, [status]);
     } else if (kind === "registered") {
-      rows = await all("SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number, part.group_name, part.registered_at FROM training_applications a JOIN training_participants part ON part.application_id = a.id LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Payment Verified' LEFT JOIN training_receipts r ON r.payment_id = pay.id ORDER BY part.registered_at DESC");
+      rows = await all("SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number, part.group_name, part.registered_at FROM training_applications a JOIN training_participants part ON part.application_id = a.id LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Payment Verified' LEFT JOIN training_receipts r ON r.payment_id = pay.id WHERE a.deleted_at IS NULL ORDER BY part.registered_at DESC");
     } else {
       const normalizedStatus = { accepted: "Approved", rejected: "Rejected", waitlisted: "Under Review" }[kind];
-      rows = await all(`SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_applications a LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Payment Verified' LEFT JOIN training_receipts r ON r.payment_id = pay.id ${normalizedStatus ? "WHERE a.status = ?" : ""} ORDER BY a.submitted_at DESC`, normalizedStatus ? [normalizedStatus] : []);
+      rows = await all(`SELECT a.*, pay.amount, pay.payment_method, pay.payment_reference, r.receipt_number FROM training_applications a LEFT JOIN training_payments pay ON pay.application_id = a.id AND pay.status = 'Payment Verified' LEFT JOIN training_receipts r ON r.payment_id = pay.id WHERE a.deleted_at IS NULL${normalizedStatus ? " AND a.status = ?" : ""} ORDER BY a.submitted_at DESC`, normalizedStatus ? [normalizedStatus] : []);
     }
     const workbook = XLSX.utils.book_new();
     const sheet = XLSX.utils.json_to_sheet(exportRows(kind, rows));
@@ -340,7 +407,7 @@ trainingRouter.get("/admin/training-export/:kind", requireAuth, async (req, res,
 trainingRouter.get("/admin/training-stats", requireAuth, async (_req, res, next) => {
   try {
     const [total, review, accepted, waitlisted, rejected, verified, pending, revenue, registered] = await Promise.all([
-      get("SELECT COUNT(*) AS count FROM training_applications"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Approved'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE status = 'Rejected'"), get("SELECT COUNT(*) AS count FROM training_payments WHERE status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_payments WHERE status IN ('Pending', 'Payment Submitted')"), get("SELECT COALESCE(SUM(amount), 0) AS total FROM training_payments WHERE status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_participants")
+      get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Approved'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Rejected'"), get("SELECT COUNT(*) AS count FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status IN ('Pending', 'Payment Submitted')"), get("SELECT COALESCE(SUM(pay.amount), 0) AS total FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_participants part JOIN training_applications a ON a.id = part.application_id WHERE a.deleted_at IS NULL")
     ]);
     return res.json({ total: Number(total?.count || 0), under_review: Number(review?.count || 0), accepted: Number(accepted?.count || 0), waitlisted: Number(waitlisted?.count || 0), rejected: Number(rejected?.count || 0), verified_payments: Number(verified?.count || 0), pending_payments: Number(pending?.count || 0), revenue: Number(revenue?.total || 0), registered: Number(registered?.count || 0) });
   } catch (error) { return next(error); }

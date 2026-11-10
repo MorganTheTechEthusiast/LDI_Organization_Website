@@ -355,6 +355,9 @@ export async function initDb() {
       status TEXT NOT NULL DEFAULT 'Submitted',
       payment_status TEXT NOT NULL DEFAULT 'Pending',
       admin_notes TEXT,
+      deleted_at TEXT,
+      deleted_by INTEGER,
+      deletion_reason TEXT,
       submitted_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
@@ -418,6 +421,9 @@ export async function initDb() {
       entity_type TEXT NOT NULL,
       entity_id INTEGER,
       metadata TEXT,
+      ip_address TEXT,
+      user_agent TEXT,
+      reason TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -462,6 +468,9 @@ export async function initDb() {
     status: "TEXT DEFAULT 'Submitted'",
     payment_status: "TEXT DEFAULT 'Pending'",
     admin_notes: "TEXT",
+    deleted_at: "TEXT",
+    deleted_by: "INTEGER",
+    deletion_reason: "TEXT",
     submitted_at: "TEXT",
     updated_at: "TEXT",
   });
@@ -477,6 +486,11 @@ export async function initDb() {
   await ensureColumns("training_receipts", {
     issued_by: "INTEGER",
     issued_at: "TEXT",
+  });
+  await ensureColumns("audit_logs", {
+    ip_address: "TEXT",
+    user_agent: "TEXT",
+    reason: "TEXT",
   });
   if (dbClient === "postgres") {
     await run("CREATE UNIQUE INDEX IF NOT EXISTS idx_training_applications_reference ON training_applications (application_reference) WHERE application_reference IS NOT NULL");

@@ -20,10 +20,10 @@ async function main() {
   const existing = await get("SELECT id FROM users WHERE email = ?", [email]);
 
   if (existing) {
-    await run("UPDATE users SET name = ?, password_hash = ?, role = ? WHERE id = ?", [name, passwordHash, "super_admin", existing.id]);
+    await run("UPDATE users SET name = ?, password_hash = ?, role = ? WHERE id = ?", [name, passwordHash, "superadmin", existing.id]);
     console.log(`Super admin updated: ${email}`);
   } else {
-    await run("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)", [name, email, passwordHash, "super_admin"]);
+    await run("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)", [name, email, passwordHash, "superadmin"]);
     console.log(`Super admin created: ${email}`);
   }
 }

@@ -35,7 +35,7 @@ async function seedUsers() {
     "LDI Administrator",
     "admin@liberiadigitalinsights.org",
     hash,
-    "admin"
+    "superadmin"
   ]);
 }
 

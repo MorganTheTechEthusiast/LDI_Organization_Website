@@ -9,6 +9,7 @@
     "start": "node src/index.js",
     "seed": "node src/seed.js",
     "create-super-admin": "node src/create-super-admin.js",
+    "promote-super-admin": "node src/promote-super-admin.js",
     "migrate:sqlite-to-postgres": "node src/migrate-sqlite-to-postgres.js"
   },
   "dependencies": {
