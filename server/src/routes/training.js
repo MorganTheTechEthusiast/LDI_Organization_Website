@@ -165,6 +165,24 @@ trainingRouter.get("/admin/training-applications/:id", requireAuth, async (req, 
   } catch (error) { return next(error); }
 });
 
+trainingRouter.delete("/admin/training-applications/:id", requireAuth, async (req, res, next) => {
+  try {
+    const application = await get("SELECT id, application_reference, full_name FROM training_applications WHERE id = ?", [req.params.id]);
+    if (!application) return res.status(404).json({ message: "Application not found." });
+
+    // Remove dependent records first so receipts, payments, documents, and
+    // participant entries cannot remain orphaned after the application is removed.
+    await run("DELETE FROM training_receipts WHERE application_id = ?", [application.id]);
+    await run("DELETE FROM training_payments WHERE application_id = ?", [application.id]);
+    await run("DELETE FROM application_documents WHERE application_id = ?", [application.id]);
+    await run("DELETE FROM training_participants WHERE application_id = ?", [application.id]);
+    await run("DELETE FROM training_applications WHERE id = ?", [application.id]);
+    await writeAudit(req.user.id, "application_deleted", "training_application", application.id, { application_reference: application.application_reference, full_name: application.full_name });
+
+    return res.json({ message: "Application and related records deleted." });
+  } catch (error) { return next(error); }
+});
+
 trainingRouter.put("/admin/training-applications/:id", requireAuth, async (req, res, next) => {
   try {
     const status = text(req.body?.status);

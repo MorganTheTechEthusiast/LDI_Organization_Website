@@ -141,6 +141,8 @@ a:focus-visible,button:focus-visible,input:focus-visible { outline: 3px solid rg
 .admin-primary-button:hover { background: #8d1928; transform: translateY(-1px); }
 .admin-secondary-button { color: #6b0f1a; border: 1px solid #e8d8db; background: white; }
 .admin-secondary-button:hover { border-color: #e05a2b; color: #e05a2b; }
+.admin-danger-icon { display: inline-grid; width: 30px; height: 30px; place-items: center; color: #a3272d; border: 1px solid #f0d3d3; border-radius: 4px; background: #fff8f8; transition: color .2s ease, background .2s ease, border-color .2s ease; }
+.admin-danger-icon:hover { color: white; border-color: #a3272d; background: #a3272d; }
 .admin-stat-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 13px; margin-bottom: 22px; }
 .admin-stat-card { position: relative; display: grid; grid-template-columns: 38px 1fr; align-items: start; gap: 12px; min-height: 126px; padding: 19px; overflow: hidden; border: 1px solid #e8e9ec; border-radius: 6px; background: white; box-shadow: 0 5px 18px rgba(23,23,27,.035); }
 .admin-stat-card::after { position: absolute; right: -17px; bottom: -29px; width: 95px; height: 95px; content: ""; border: 1px solid rgba(107,15,26,.08); border-radius: 50%; }
