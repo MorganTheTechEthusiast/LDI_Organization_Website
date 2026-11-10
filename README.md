@@ -232,3 +232,29 @@ PUBLIC_APP_URL=https://your-frontend-domain.example
 ```
 
 `PUBLIC_APP_URL` must contain exactly one URL, for example `https://liberiadigitalinsights.com`. Do not put the comma-separated `CLIENT_ORIGIN` list in `PUBLIC_APP_URL`; that list is only for CORS. The `MAIL_FROM` address must be registered and verified as a sender in Brevo. The backend sends transactional messages through Brevo's HTTPS endpoint, which avoids Railway SMTP connection timeouts. SMTP variables remain available as a local-development fallback; Gmail requires an App Password for `SMTP_PASS`. Email delivery is best-effort: an application is still saved if email delivery is temporarily unavailable, and the server logs the delivery failure.
+
+## Application governance
+
+Application records support soft archiving. Regular administrators can archive an application only after entering a reason; financial records are preserved. Permanent deletion requires the `superadmin` role, a reason, and is blocked when verified payments or receipts exist. Administrative activity is recorded in the read-only `/admin/audit-logs` page and can be exported as Excel. Set `SUPER_ADMIN_EMAIL` in production to receive archive and deletion alerts.
+
+Supported admin roles are `superadmin`, `training_manager`, `finance_reviewer`, `content_editor`, `support_officer`, and `auditor`. Create or update a role account locally against the selected database with:
+
+```bash
+npm run create-admin-user --workspace server -- --email user@example.com --password 'a-strong-password-12' --name 'Team Member' --role content_editor
+```
+
+Use the appropriate role value for each staff member. The command updates an existing matching email or creates a new account; it never seeds sample users.
+
+To promote an existing production account to super administrator, run this targeted SQL statement in the Railway PostgreSQL query console after replacing the email:
+
+```sql
+UPDATE users SET role = 'superadmin' WHERE email = 'your-admin-email@example.com';
+```
+
+The preferred local maintenance command is safer because it changes only the role and does not reset the password. Temporarily configure `server/.env` with `DB_CLIENT=postgres` and the production `DATABASE_URL`, comment out `SQLITE_PATH`, then run:
+
+```bash
+npm run promote-super-admin --workspace server -- admin@liberiadigitalinsights.org
+```
+
+Restore the local SQLite settings immediately after the command. Never commit the production connection string or print it in logs.

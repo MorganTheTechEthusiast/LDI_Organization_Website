@@ -1,6 +1,6 @@
 import express from "express";
 import { all, run } from "../db.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireRoles } from "../middleware/auth.js";
 import { requiredFields } from "../utils.js";
 
 export const contactRouter = express.Router();
@@ -21,7 +21,7 @@ contactRouter.post("/contact", async (req, res, next) => {
   }
 });
 
-contactRouter.get("/contact-messages", requireAuth, async (_req, res, next) => {
+contactRouter.get("/contact-messages", requireAuth, requireRoles("support_officer", "training_manager", "auditor"), async (_req, res, next) => {
   try {
     const messages = await all("SELECT * FROM contact_messages ORDER BY created_at DESC");
     return res.json(messages);
@@ -30,7 +30,7 @@ contactRouter.get("/contact-messages", requireAuth, async (_req, res, next) => {
   }
 });
 
-contactRouter.delete("/contact-messages/:id", requireAuth, async (req, res, next) => {
+contactRouter.delete("/contact-messages/:id", requireAuth, requireRoles("support_officer"), async (req, res, next) => {
   try {
     await run("DELETE FROM contact_messages WHERE id = ?", [req.params.id]);
     return res.json({ message: "Message deleted." });

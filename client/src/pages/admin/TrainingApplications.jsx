@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardList, Clock3, DollarSign, Download, ExternalLink, Search, Trash2, UserCheck, XCircle } from "lucide-react";
+import { Archive, CheckCircle2, ClipboardList, Clock3, DollarSign, Download, ExternalLink, Search, Trash2, UserCheck, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
 
@@ -14,6 +14,7 @@ export default function TrainingApplications() {
   const [selected, setSelected] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const currentUser = (() => { try { return JSON.parse(localStorage.getItem("ldi_user") || "{}"); } catch { return {}; } })();
 
   async function load() {
     const [applicationResponse, paymentResponse, statsResponse] = await Promise.all([api.get(`/admin/training-applications?search=${encodeURIComponent(search)}`), api.get("/admin/training-payments"), api.get("/admin/training-stats")]);
@@ -32,12 +33,24 @@ export default function TrainingApplications() {
     try { const response = await api.put(`/admin/training-payments/${id}`, { status }); setMessage(response.data.receipt ? `Payment verified. Receipt ${response.data.receipt.receipt_number} issued.` : "Payment status updated and applicant notification sent when email delivery is configured."); await load(); } catch (requestError) { setError(requestError.response?.data?.message || "Could not update payment."); }
   }
 
+  async function archiveApplication(application) {
+    const reason = window.prompt(`Why are you archiving ${application.full_name} (${application.application_reference})? Enter at least 10 characters.`);
+    if (!reason || reason.trim().length < 10) { if (reason !== null) setError("Please provide an archive reason of at least 10 characters."); return; }
+    try {
+      await api.post(`/admin/training-applications/${application.id}/archive`, { reason: reason.trim() });
+      setMessage(`Application ${application.application_reference} was archived. Financial records were preserved.`);
+      await load();
+    } catch (requestError) { setError(requestError.response?.data?.message || "Could not archive application."); }
+  }
+
   async function deleteApplication(application) {
-    const confirmed = window.confirm(`Delete ${application.full_name} (${application.application_reference})? This permanently removes the application and related payment records.`);
+    const reason = window.prompt(`Why are you permanently deleting ${application.full_name} (${application.application_reference})? This cannot be undone. Enter at least 10 characters.`);
+    if (!reason || reason.trim().length < 10) { if (reason !== null) setError("Please provide a deletion reason of at least 10 characters."); return; }
+    const confirmed = window.confirm(`Permanently delete ${application.full_name} (${application.application_reference})? Verified payments and receipts cannot be deleted.`);
     if (!confirmed) return;
     setError("");
     try {
-      await api.delete(`/admin/training-applications/${application.id}`);
+      await api.delete(`/admin/training-applications/${application.id}`, { data: { reason: reason.trim() } });
       setMessage(`Application ${application.application_reference} was permanently deleted.`);
       setSelected(null);
       await load();
@@ -51,13 +64,13 @@ export default function TrainingApplications() {
   return <div className="admin-page"><div className="mb-8 flex flex-wrap items-end justify-between gap-4"><div><p className="admin-kicker">Girls in Tech • Cohort #2</p><h1 className="admin-page-title">Application management</h1><p className="admin-page-lede">Review applicants, verify manual payments, and keep people informed.</p></div><div className="flex gap-2"><button className={`admin-primary-button ${tab !== "applications" ? "opacity-60" : ""}`} onClick={() => setTab("applications")}><ClipboardList className="h-4 w-4" /> Applications</button><button className={`admin-secondary-button ${tab !== "payments" ? "" : "border-maroon text-maroon"}`} onClick={() => setTab("payments")}><DollarSign className="h-4 w-4" /> Payments</button></div></div>
     {message && <p className="mb-4 rounded-md bg-green-50 p-3 text-sm font-semibold text-green-700">{message}</p>}{error && <p className="mb-4 rounded-md bg-red-50 p-3 text-sm font-semibold text-maroon">{error}</p>}
     <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{[["Total applications", stats.total, ClipboardList], ["Under review", stats.under_review, Clock3], ["Approved", stats.accepted, CheckCircle2], ["Verified payments", stats.verified_payments, DollarSign], ["Registered", stats.registered, UserCheck]].map(([label, value, Icon]) => <div className="rounded-lg bg-white p-5 shadow-sm" key={label}><Icon className="mb-4 h-6 w-6 text-maroon" /><p className="text-3xl font-black text-ink">{value ?? "-"}</p><p className="mt-1 text-xs font-bold text-black/55">{label}</p></div>)}</div>
-    {tab === "applications" ? <ApplicationTable applications={applications} search={search} setSearch={setSearch} updateApplication={updateApplication} deleteApplication={deleteApplication} setSelected={setSelected} downloadExport={downloadExport} /> : <PaymentTable payments={payments} updatePayment={updatePayment} downloadExport={downloadExport} />}
+    {tab === "applications" ? <ApplicationTable applications={applications} search={search} setSearch={setSearch} updateApplication={updateApplication} archiveApplication={archiveApplication} deleteApplication={deleteApplication} canDelete={currentUser.role === "superadmin"} setSelected={setSelected} downloadExport={downloadExport} /> : <PaymentTable payments={payments} updatePayment={updatePayment} downloadExport={downloadExport} />}
     {selected && <ApplicationDetail application={selected} close={() => setSelected(null)} />}
   </div>;
 }
 
-function ApplicationTable({ applications, search, setSearch, updateApplication, deleteApplication, setSelected, downloadExport }) {
-  return <section className="rounded-lg bg-white p-5 shadow-sm"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><label className="flex max-w-md flex-1 items-center gap-2 rounded-md border border-black/10 px-3"><Search className="h-4 w-4 text-black/45" /><input className="w-full border-0 bg-transparent py-3 text-sm outline-none" placeholder="Search name or reference" value={search} onChange={(event) => setSearch(event.target.value)} /></label><ExportMenu downloadExport={downloadExport} /></div><div className="overflow-x-auto"><table className="w-full min-w-[980px] text-left text-sm"><thead className="bg-ink text-white"><tr><th className="px-3 py-3">Applicant</th><th className="px-3 py-3">Reference</th><th className="px-3 py-3">County</th><th className="px-3 py-3">Submitted</th><th className="px-3 py-3">Application status</th><th className="px-3 py-3">Payment</th><th className="px-3 py-3">Action</th></tr></thead><tbody>{applications.map((item) => <tr className="border-t border-black/10" key={item.id}><td className="px-3 py-3"><strong>{item.full_name}</strong><br /><span className="text-xs text-black/55">{item.email}</span></td><td className="px-3 py-3 font-semibold text-maroon">{item.application_reference}</td><td className="px-3 py-3">{item.county || "-"}</td><td className="px-3 py-3">{String(item.submitted_at || "").slice(0, 10)}</td><td className="px-3 py-3"><select className="rounded border border-black/10 p-2 text-xs" value={item.status} onChange={(event) => updateApplication(item.id, event.target.value)}>{applicationStatuses.map((option) => <option key={option}>{option}</option>)}</select></td><td className="px-3 py-3">{item.payment_status}</td><td className="px-3 py-3"><div className="flex items-center gap-3"><button className="font-bold text-maroon hover:text-ember" onClick={() => setSelected(item)}>View</button><button type="button" className="admin-danger-icon" title={`Delete ${item.application_reference}`} aria-label={`Delete ${item.application_reference}`} onClick={() => deleteApplication(item)}><Trash2 className="h-4 w-4" /></button></div></td></tr>)}</tbody></table>{!applications.length && <p className="p-8 text-center text-sm text-black/55">No applications found.</p>}</div></section>;
+function ApplicationTable({ applications, search, setSearch, updateApplication, archiveApplication, deleteApplication, canDelete, setSelected, downloadExport }) {
+  return <section className="rounded-lg bg-white p-5 shadow-sm"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><label className="flex max-w-md flex-1 items-center gap-2 rounded-md border border-black/10 px-3"><Search className="h-4 w-4 text-black/45" /><input className="w-full border-0 bg-transparent py-3 text-sm outline-none" placeholder="Search name or reference" value={search} onChange={(event) => setSearch(event.target.value)} /></label><ExportMenu downloadExport={downloadExport} /></div><div className="overflow-x-auto"><table className="w-full min-w-[980px] text-left text-sm"><thead className="bg-ink text-white"><tr><th className="px-3 py-3">Applicant</th><th className="px-3 py-3">Reference</th><th className="px-3 py-3">County</th><th className="px-3 py-3">Submitted</th><th className="px-3 py-3">Application status</th><th className="px-3 py-3">Payment</th><th className="px-3 py-3">Action</th></tr></thead><tbody>{applications.map((item) => <tr className="border-t border-black/10" key={item.id}><td className="px-3 py-3"><strong>{item.full_name}</strong><br /><span className="text-xs text-black/55">{item.email}</span></td><td className="px-3 py-3 font-semibold text-maroon">{item.application_reference}</td><td className="px-3 py-3">{item.county || "-"}</td><td className="px-3 py-3">{String(item.submitted_at || "").slice(0, 10)}</td><td className="px-3 py-3"><select className="rounded border border-black/10 p-2 text-xs" value={item.status} onChange={(event) => updateApplication(item.id, event.target.value)}>{applicationStatuses.map((option) => <option key={option}>{option}</option>)}</select></td><td className="px-3 py-3">{item.payment_status}</td><td className="px-3 py-3"><div className="flex items-center gap-3"><button className="font-bold text-maroon hover:text-ember" onClick={() => setSelected(item)}>View</button><button type="button" className="admin-archive-button" title={`Archive ${item.application_reference}`} aria-label={`Archive ${item.application_reference}`} onClick={() => archiveApplication(item)}><Archive className="h-3.5 w-3.5" /> Archive</button>{canDelete && <button type="button" className="admin-danger-icon" title={`Permanently delete ${item.application_reference}`} aria-label={`Permanently delete ${item.application_reference}`} onClick={() => deleteApplication(item)}><Trash2 className="h-4 w-4" /></button>}</div></td></tr>)}</tbody></table>{!applications.length && <p className="p-8 text-center text-sm text-black/55">No applications found.</p>}</div></section>;
 }
 
 function PaymentTable({ payments, updatePayment, downloadExport }) {

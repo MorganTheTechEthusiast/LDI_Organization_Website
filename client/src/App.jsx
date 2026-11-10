@@ -8,6 +8,7 @@ import TrainingProgramSettings from "./pages/admin/TrainingProgramSettings.jsx";
 import Contact from "./pages/Contact.jsx";
 import GetInvolved from "./pages/GetInvolved.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
+import AuditLogs from "./pages/admin/AuditLogs.jsx";
 import Gallery from "./pages/Gallery.jsx";
 import GirlsInTech from "./pages/GirlsInTech.jsx";
 import Home from "./pages/Home.jsx";
@@ -76,6 +77,7 @@ export default function App() {
         <Route path="messages" element={<AdminResource type="messages" />} />
         <Route path="training-applications" element={<TrainingApplications />} />
         <Route path="training-program" element={<TrainingProgramSettings />} />
+        <Route path="audit-logs" element={<AuditLogs />} />
       </Route>
     </Routes>
   );

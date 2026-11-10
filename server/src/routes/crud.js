@@ -1,6 +1,6 @@
 import express from "express";
 import { all, get, run } from "../db.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireRoles } from "../middleware/auth.js";
 import { requiredFields, slugify } from "../utils.js";
 
 const tableConfig = {
@@ -10,14 +10,16 @@ const tableConfig = {
     required: ["title", "category", "author", "date", "summary", "content"],
     defaults: { image_url: "https://dummyimage.com/1200x800/7A1022/ffffff&text=Liberia+Digital+Insights" },
     order: "date DESC, id DESC",
-    bySlug: true
+    bySlug: true,
+    roles: ["content_editor"]
   },
   events: {
     table: "events",
     fields: ["title", "date", "image_url", "description", "status"],
     required: ["title", "date", "description", "status"],
     defaults: { image_url: "https://dummyimage.com/1200x800/F97316/111111&text=LDI+Event" },
-    order: "date DESC, id DESC"
+    order: "date DESC, id DESC",
+    roles: ["content_editor"]
   },
   videos: {
     table: "video_interviews",
@@ -25,7 +27,8 @@ const tableConfig = {
     required: ["title", "category", "guest_name", "date", "video_url", "summary"],
     defaults: { thumbnail_url: "https://dummyimage.com/1200x675/7A1022/ffffff&text=LDI+Video+Interview" },
     order: "date DESC, id DESC",
-    bySlug: true
+    bySlug: true,
+    roles: ["content_editor"]
   },
   trainings: {
     table: "trainings",
@@ -33,7 +36,8 @@ const tableConfig = {
     required: ["title", "course", "location", "start_date", "duration", "description", "status"],
     defaults: { image_url: "https://dummyimage.com/1200x800/7A1022/ffffff&text=LDI+Training", featured: 0 },
     order: "featured DESC, start_date ASC, id DESC",
-    bySlug: true
+    bySlug: true,
+    roles: ["content_editor", "training_manager"]
   },
   opportunities: {
     table: "opportunities",
@@ -41,21 +45,24 @@ const tableConfig = {
     required: ["title", "category", "description", "status"],
     defaults: { image_url: "https://dummyimage.com/1200x800/6B0F1A/ffffff&text=LDI+Opportunity", featured: 0 },
     order: "featured DESC, deadline ASC, id DESC",
-    bySlug: true
+    bySlug: true,
+    roles: ["content_editor"]
   },
   "team-members": {
     table: "team_members",
     fields: ["name", "position", "bio", "photo_url", "linkedin", "twitter"],
     required: ["name", "position", "bio"],
     defaults: { photo_url: "https://dummyimage.com/800x800/111113/ffffff&text=LDI+Team" },
-    order: "id ASC"
+    order: "id ASC",
+    roles: ["content_editor"]
   },
   gallery: {
     table: "gallery",
     fields: ["title", "category", "image_url", "description"],
     required: ["title", "category"],
     defaults: { image_url: "https://dummyimage.com/1200x800/7A1022/ffffff&text=LDI+Gallery" },
-    order: "id DESC"
+    order: "id DESC",
+    roles: ["content_editor"]
   },
   "youth-innovators": {
     table: "youth_innovators",
@@ -63,14 +70,16 @@ const tableConfig = {
     required: ["name", "role", "category", "bio"],
     defaults: { photo_url: "https://dummyimage.com/800x1000/6B0F1A/ffffff&text=LDI+Youth+Innovation", featured: 0 },
     order: "featured DESC, id DESC",
-    bySlug: true
+    bySlug: true,
+    roles: ["content_editor"]
   },
   partners: {
     table: "partners",
     fields: ["name", "logo_url", "description", "website"],
     required: ["name", "description"],
     defaults: { logo_url: "https://dummyimage.com/300x140/7A1022/ffffff&text=LDI+Partner" },
-    order: "id ASC"
+    order: "id ASC",
+    roles: ["content_editor"]
   }
 };
 
@@ -124,7 +133,9 @@ for (const [path, config] of Object.entries(tableConfig)) {
     }
   });
 
-  crudRouter.post(`/${path}`, requireAuth, async (req, res, next) => {
+  const roleGuard = requireRoles(...config.roles);
+
+  crudRouter.post(`/${path}`, requireAuth, roleGuard, async (req, res, next) => {
     try {
       applyDefaults(req.body, config.defaults);
       normalizeRecord(path, req.body);
@@ -145,7 +156,7 @@ for (const [path, config] of Object.entries(tableConfig)) {
     }
   });
 
-  crudRouter.put(`/${path}/:id`, requireAuth, async (req, res, next) => {
+  crudRouter.put(`/${path}/:id`, requireAuth, roleGuard, async (req, res, next) => {
     try {
       applyDefaults(req.body, config.defaults);
       normalizeRecord(path, req.body);
@@ -163,7 +174,7 @@ for (const [path, config] of Object.entries(tableConfig)) {
     }
   });
 
-  crudRouter.delete(`/${path}/:id`, requireAuth, async (req, res, next) => {
+  crudRouter.delete(`/${path}/:id`, requireAuth, roleGuard, async (req, res, next) => {
     try {
       await run(`DELETE FROM ${config.table} WHERE id = ?`, [req.params.id]);
       return res.json({ message: "Record deleted." });

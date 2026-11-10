@@ -2,7 +2,7 @@ import express from "express";
 import PDFDocument from "pdfkit";
 import XLSX from "xlsx";
 import { all, get, run } from "../db.js";
-import { requireAuth, requireSuperAdmin } from "../middleware/auth.js";
+import { requireAuth, requireRoles, requireSuperAdmin } from "../middleware/auth.js";
 import { applicationReceivedEmail, sendEmail, statusChangeEmail } from "../services/email.js";
 
 export const trainingRouter = express.Router();
@@ -11,6 +11,10 @@ const PROGRAM_SLUG = "girls-in-tech-cohort-2";
 const applicationStatuses = ["Submitted", "Awaiting Payment", "Payment Submitted", "Payment Verified", "Under Review", "Approved", "Rejected", "Payment Rejected", "Registration Completed"];
 const paymentStatuses = ["Pending", "Payment Submitted", "Payment Verified", "Payment Rejected", "Refunded"];
 const publicRequestLog = new Map();
+const applicationViewer = requireRoles("training_manager", "finance_reviewer", "support_officer", "auditor");
+const trainingManager = requireRoles("training_manager");
+const financeReviewer = requireRoles("finance_reviewer");
+const auditViewer = requireRoles("training_manager", "finance_reviewer", "auditor");
 
 function publicRateLimit(req, res, next) {
   const key = `${req.ip}:${req.path}`;
@@ -154,7 +158,7 @@ trainingRouter.post("/training-payments", publicRateLimit, async (req, res, next
   } catch (error) { return next(error); }
 });
 
-trainingRouter.get("/admin/training-applications", requireAuth, async (req, res, next) => {
+trainingRouter.get("/admin/training-applications", requireAuth, applicationViewer, async (req, res, next) => {
   try {
     const conditions = [];
     const params = [];
@@ -167,7 +171,7 @@ trainingRouter.get("/admin/training-applications", requireAuth, async (req, res,
   } catch (error) { return next(error); }
 });
 
-trainingRouter.get("/admin/training-applications/:id", requireAuth, async (req, res, next) => {
+trainingRouter.get("/admin/training-applications/:id", requireAuth, applicationViewer, async (req, res, next) => {
   try {
     const application = await get("SELECT a.*, p.title AS program_title, p.cohort_number, p.fee, p.currency FROM training_applications a JOIN training_programs p ON p.id = a.program_id WHERE a.id = ? AND a.deleted_at IS NULL", [req.params.id]);
     if (!application) return res.status(404).json({ message: "Application not found." });
@@ -176,7 +180,7 @@ trainingRouter.get("/admin/training-applications/:id", requireAuth, async (req, 
   } catch (error) { return next(error); }
 });
 
-trainingRouter.post("/admin/training-applications/:id/archive", requireAuth, async (req, res, next) => {
+trainingRouter.post("/admin/training-applications/:id/archive", requireAuth, trainingManager, async (req, res, next) => {
   try {
     const reason = text(req.body?.reason);
     if (reason.length < 10) return res.status(400).json({ message: "A deletion reason of at least 10 characters is required." });
@@ -213,7 +217,7 @@ trainingRouter.delete("/admin/training-applications/:id", requireAuth, requireSu
   } catch (error) { return next(error); }
 });
 
-trainingRouter.put("/admin/training-applications/:id", requireAuth, async (req, res, next) => {
+trainingRouter.put("/admin/training-applications/:id", requireAuth, trainingManager, async (req, res, next) => {
   try {
     const existingApplication = await get("SELECT id, deleted_at FROM training_applications WHERE id = ?", [req.params.id]);
     if (!existingApplication) return res.status(404).json({ message: "Application not found." });
@@ -227,13 +231,13 @@ trainingRouter.put("/admin/training-applications/:id", requireAuth, async (req, 
   } catch (error) { return next(error); }
 });
 
-trainingRouter.get("/admin/training-payments", requireAuth, async (_req, res, next) => {
+trainingRouter.get("/admin/training-payments", requireAuth, requireRoles("training_manager", "finance_reviewer", "auditor"), async (_req, res, next) => {
   try {
     return res.json(await all(`SELECT pay.*, a.application_reference, a.full_name, a.email FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id ORDER BY pay.created_at DESC, pay.id DESC`));
   } catch (error) { return next(error); }
 });
 
-trainingRouter.put("/admin/training-payments/:id", requireAuth, async (req, res, next) => {
+trainingRouter.put("/admin/training-payments/:id", requireAuth, financeReviewer, async (req, res, next) => {
   try {
     const status = text(req.body?.status);
     if (!paymentStatuses.includes(status)) return res.status(400).json({ message: "Invalid payment status." });
@@ -259,7 +263,7 @@ trainingRouter.put("/admin/training-payments/:id", requireAuth, async (req, res,
   } catch (error) { return next(error); }
 });
 
-trainingRouter.post("/admin/training-participants", requireAuth, async (req, res, next) => {
+trainingRouter.post("/admin/training-participants", requireAuth, trainingManager, async (req, res, next) => {
   try {
     const application = await get("SELECT * FROM training_applications WHERE id = ?", [req.body?.application_id]);
     if (!application) return res.status(404).json({ message: "Application not found." });
@@ -272,11 +276,11 @@ trainingRouter.post("/admin/training-participants", requireAuth, async (req, res
   } catch (error) { return next(error); }
 });
 
-trainingRouter.get("/admin/training-program", requireAuth, async (_req, res, next) => {
+trainingRouter.get("/admin/training-program", requireAuth, trainingManager, async (_req, res, next) => {
   try { return res.json(publicProgram(await getProgram())); } catch (error) { return next(error); }
 });
 
-trainingRouter.get("/admin/audit-logs", requireAuth, async (req, res, next) => {
+trainingRouter.get("/admin/audit-logs", requireAuth, auditViewer, async (req, res, next) => {
   try {
     const params = [];
     const conditions = [];
@@ -293,7 +297,7 @@ trainingRouter.get("/admin/audit-logs", requireAuth, async (req, res, next) => {
   } catch (error) { return next(error); }
 });
 
-trainingRouter.get("/admin/audit-export", requireAuth, async (_req, res, next) => {
+trainingRouter.get("/admin/audit-export", requireAuth, auditViewer, async (_req, res, next) => {
   try {
     const rows = await all("SELECT audit_logs.created_at AS Date, u.name AS Actor, u.email AS Email, audit_logs.action AS Action, audit_logs.entity_type AS Entity, audit_logs.entity_id AS Entity_ID, audit_logs.reason AS Reason, audit_logs.ip_address AS IP_Address, audit_logs.metadata AS Details FROM audit_logs LEFT JOIN users u ON u.id = audit_logs.user_id ORDER BY audit_logs.created_at DESC, audit_logs.id DESC");
     const workbook = XLSX.utils.book_new();
@@ -307,7 +311,7 @@ trainingRouter.get("/admin/audit-export", requireAuth, async (_req, res, next) =
   } catch (error) { return next(error); }
 });
 
-trainingRouter.put("/admin/training-program", requireAuth, async (req, res, next) => {
+trainingRouter.put("/admin/training-program", requireAuth, trainingManager, async (req, res, next) => {
   try {
     const allowed = ["title", "cohort_number", "tagline", "overview", "about_ldi", "duration", "schedule", "eligibility", "currency", "deadline", "payment_instructions", "image_url", "status"];
     const fields = allowed.filter((field) => req.body[field] !== undefined);
@@ -380,7 +384,7 @@ function exportRows(kind, rows) {
   }));
 }
 
-trainingRouter.get("/admin/training-export/:kind", requireAuth, async (req, res, next) => {
+trainingRouter.get("/admin/training-export/:kind", requireAuth, auditViewer, async (req, res, next) => {
   try {
     const kind = text(req.params.kind);
     let rows;
@@ -404,7 +408,7 @@ trainingRouter.get("/admin/training-export/:kind", requireAuth, async (req, res,
   } catch (error) { return next(error); }
 });
 
-trainingRouter.get("/admin/training-stats", requireAuth, async (_req, res, next) => {
+trainingRouter.get("/admin/training-stats", requireAuth, auditViewer, async (_req, res, next) => {
   try {
     const [total, review, accepted, waitlisted, rejected, verified, pending, revenue, registered] = await Promise.all([
       get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Approved'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Under Review'"), get("SELECT COUNT(*) AS count FROM training_applications WHERE deleted_at IS NULL AND status = 'Rejected'"), get("SELECT COUNT(*) AS count FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status IN ('Pending', 'Payment Submitted')"), get("SELECT COALESCE(SUM(pay.amount), 0) AS total FROM training_payments pay JOIN training_applications a ON a.id = pay.application_id WHERE a.deleted_at IS NULL AND pay.status = 'Payment Verified'"), get("SELECT COUNT(*) AS count FROM training_participants part JOIN training_applications a ON a.id = part.application_id WHERE a.deleted_at IS NULL")
